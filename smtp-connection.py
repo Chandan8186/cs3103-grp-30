@@ -36,7 +36,6 @@ class SMTP_Connection:
 
         body = f'''
         <h1>{placeholders['name']} {placeholders['department_code']}</h1>
-        <img src = {placeholders['img']}>
         '''
 
         mimetext = MIMEText(body, 'html')
@@ -57,6 +56,30 @@ class SMTP_Connection:
             print("Something cock up")
         except smtplib.SMTPNotSupportedError:
             print("Server got some beef with SMTPUTF8")
+
+'''
+Test function to test the functionalities of SMTP_Connection
+def main_test():
+    test_msg = SMTP_Connection()
+    test_msg.connect()
+
+    placeholders = dict()
+
+    placeholders['subject'] = "Test email"
+    placeholders['name'] = "Arshad"
+    placeholders['department_code'] = "SOC"
+
+    receiver = "radical-awesome@hotmail.com"
+
+    test_msg.send_message(test_msg.craft_message(receiver, placeholders), receiver)
+    print("Message Sent")
+
+    test_msg.terminate()
+
+if __name__ == "__main__":
+    main_test()
+'''
+
         
 
 
