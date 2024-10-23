@@ -1,5 +1,6 @@
 import getpass
 import smtplib
+import sys
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -19,6 +20,7 @@ class SMTP_Connection:
             print('Server did not like us :(')
         except smtplib.SMTPAuthenticationError:
             print("Invalid Username/Password! Sure or not ur password/username correct?")
+            sys.exit(1)
         except smtplib.SMTPNotSupportedError:
             print("Server has a major skill issue by not having SMTP >:(")
         except smtplib.SMTPException:
