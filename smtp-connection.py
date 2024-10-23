@@ -1,12 +1,9 @@
 import getpass
 import smtplib
 
-<<<<<<< HEAD
-=======
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
->>>>>>> 05589d215f52bad02f34fc97ca6be79970eeb2ba
 class SMTP_Connection:
     def __init__(self, host, port):
         self.host = host
@@ -59,22 +56,16 @@ class SMTP_Connection:
         except smtplib.SMTPNotSupportedError:
             print("Server got some beef with SMTPUTF8")
 
-<<<<<<< HEAD
 
-#Test function to test the functionalities of SMTP_Connection
-def main_test():
-    test_msg = SMTP_Connection('smtp-mail.outlook.com', 587)
-    test_msg.connect()
-=======
+
 '''
 #Test function to test the functionalities of SMTP_Connection
 def main_test():
-    user = getpass.getpass("Input emailusername: ")
+    user = "radical-awesome@hotmail.com"
     password = getpass.getpass("Input password: ")
 
     test_msg = SMTP_Connection()
     test_msg.connect(user, password)
->>>>>>> 05589d215f52bad02f34fc97ca6be79970eeb2ba
 
     placeholders = dict()
 
@@ -91,7 +82,7 @@ def main_test():
 
 if __name__ == "__main__":
     main_test()
-
+'''
 
         
 
