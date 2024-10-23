@@ -6,16 +6,18 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 class SMTP_Connection:
-    def __init__(self, host, port):
+    def __init__(self, host, port, user, password):
         self.host = host
         self.port = port
+        self.user = user
+        self.password = password
         self.smtp = None
     
-    def connect(self, sender_user, sender_pass):
+    def connect(self):
         self.smtp = smtplib.SMTP(self.host, self.port)
         self.smtp.starttls()
         try:
-            self.smtp.login(sender_user, sender_pass)
+            self.smtp.login(self.user, self.password)
         except smtplib.SMTPHeloError:
             print('Server did not like us :(')
         except smtplib.SMTPAuthenticationError as e:
@@ -31,9 +33,9 @@ class SMTP_Connection:
         self.smtp.quit()
     
 
-    def send_message(self, msg, sender, recipient):
+    def send_message(self, recipient, msg):
         try:
-            self.smtp.sendmail(sender, recipient, msg)
+            self.smtp.sendmail(self.user, recipient, msg)
         except smtplib.SMTPRecipientsRefused:
             print("Bro you sending email to ghost ah?")
         except smtplib.SMTPHeloError:
@@ -53,8 +55,8 @@ def main_test():
     user = ""
     password = ""
 
-    test_msg = SMTP_Connection("smtp.office365.com", 587)
-    test_msg.connect(user, password)
+    test_msg = SMTP_Connection("smtp.office365.com", 587, user, password)
+    test_msg.connect()
 
     print("Login successful!")
 
