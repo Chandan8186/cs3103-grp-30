@@ -1,9 +1,8 @@
+import getpass
 import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 
-SENDER = "" # input email of sender here
-PASSWORD = "" # for gmail, generate application password
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 class SMTP_Connection:
     def __init__(self, host='smtp.gmail.com', port ='587'):
@@ -11,11 +10,11 @@ class SMTP_Connection:
         self.port = port
         self.smtp = None
     
-    def connect(self):
+    def connect(self, sender_user, sender_pass):
         self.smtp = smtplib.SMTP(self.host, self.port)
         self.smtp.starttls()
         try:
-            self.smtp.login(SENDER, PASSWORD)
+            self.smtp.login(sender_user, sender_pass)
         except smtplib.SMTPHeloError:
             print('Server did not like us :(')
         except smtplib.SMTPAuthenticationError:
@@ -28,9 +27,9 @@ class SMTP_Connection:
     def terminate(self):
         self.smtp.quit()
     
-    def craft_message(self, recipient, placeholders):
+    def craft_message(self, sender, recipient, placeholders):
         message = MIMEMultipart()
-        message['From'] = SENDER
+        message['From'] = sender
         message['To'] = recipient
         message['Subject'] = placeholders['subject']
 
@@ -43,9 +42,9 @@ class SMTP_Connection:
 
         return message.as_string()
 
-    def send_message(self, msg, recipient):
+    def send_message(self, msg, sender, recipient):
         try:
-            self.smtp.sendmail(SENDER, recipient, msg)
+            self.smtp.sendmail(sender, recipient, msg)
         except smtplib.SMTPRecipientsRefused:
             print("Bro you sending email to ghost ah?")
         except smtplib.SMTPHeloError:
@@ -58,10 +57,13 @@ class SMTP_Connection:
             print("Server got some beef with SMTPUTF8")
 
 '''
-Test function to test the functionalities of SMTP_Connection
+#Test function to test the functionalities of SMTP_Connection
 def main_test():
+    user = getpass.getpass("Input emailusername: ")
+    password = getpass.getpass("Input password: ")
+
     test_msg = SMTP_Connection()
-    test_msg.connect()
+    test_msg.connect(user, password)
 
     placeholders = dict()
 
@@ -71,7 +73,7 @@ def main_test():
 
     receiver = "radical-awesome@hotmail.com"
 
-    test_msg.send_message(test_msg.craft_message(receiver, placeholders), receiver)
+    test_msg.send_message(test_msg.craft_message(user, receiver, placeholders), user, receiver)
     print("Message Sent")
 
     test_msg.terminate()
