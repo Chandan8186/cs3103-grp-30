@@ -56,16 +56,7 @@ def main_test():
     test_msg = SMTP_Connection("smtp.office365.com", 587)
     test_msg.connect(user, password)
 
-    placeholders = dict()
-
-    placeholders['subject'] = "Test email"
-    placeholders['name'] = "Arshad"
-    placeholders['department_code'] = "SOC"
-
-    receiver = ""
-
-    test_msg.send_message(test_msg.craft_message(user, receiver, placeholders), user, receiver)
-    print("Message Sent")
+    print("Login successful!")
 
     test_msg.terminate()
 
