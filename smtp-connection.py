@@ -1,7 +1,12 @@
+import getpass
 import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 
+<<<<<<< HEAD
+=======
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+>>>>>>> 05589d215f52bad02f34fc97ca6be79970eeb2ba
 class SMTP_Connection:
     def __init__(self, host, port):
         self.host = host
@@ -40,7 +45,7 @@ class SMTP_Connection:
 
         return message.as_string()
 
-    def send_message(self, msg, recipient):
+    def send_message(self, msg, sender, recipient):
         try:
             self.smtp.sendmail(sender, recipient, msg)
         except smtplib.SMTPRecipientsRefused:
@@ -54,11 +59,22 @@ class SMTP_Connection:
         except smtplib.SMTPNotSupportedError:
             print("Server got some beef with SMTPUTF8")
 
+<<<<<<< HEAD
 
 #Test function to test the functionalities of SMTP_Connection
 def main_test():
     test_msg = SMTP_Connection('smtp-mail.outlook.com', 587)
     test_msg.connect()
+=======
+'''
+#Test function to test the functionalities of SMTP_Connection
+def main_test():
+    user = getpass.getpass("Input emailusername: ")
+    password = getpass.getpass("Input password: ")
+
+    test_msg = SMTP_Connection()
+    test_msg.connect(user, password)
+>>>>>>> 05589d215f52bad02f34fc97ca6be79970eeb2ba
 
     placeholders = dict()
 
@@ -68,7 +84,7 @@ def main_test():
 
     receiver = "fieryradical@gmail.com"
 
-    test_msg.send_message(test_msg.craft_message(receiver, placeholders), receiver)
+    test_msg.send_message(test_msg.craft_message(user, receiver, placeholders), user, receiver)
     print("Message Sent")
 
     test_msg.terminate()
