@@ -18,8 +18,9 @@ class SMTP_Connection:
             self.smtp.login(sender_user, sender_pass)
         except smtplib.SMTPHeloError:
             print('Server did not like us :(')
-        except smtplib.SMTPAuthenticationError:
+        except smtplib.SMTPAuthenticationError as e:
             print("Invalid Username/Password! Sure or not ur password/username correct?")
+            print(str(e))
             sys.exit(1)
         except smtplib.SMTPNotSupportedError:
             print("Server has a major skill issue by not having SMTP >:(")
@@ -29,20 +30,6 @@ class SMTP_Connection:
     def terminate(self):
         self.smtp.quit()
     
-    def craft_message(self, sender, recipient, placeholders):
-        message = MIMEMultipart()
-        message['From'] = sender
-        message['To'] = recipient
-        message['Subject'] = placeholders['subject']
-
-        body = f'''
-        <h1>{placeholders['name']} {placeholders['department_code']}</h1>
-        '''
-
-        mimetext = MIMEText(body, 'html')
-        message.attach(mimetext)
-
-        return message.as_string()
 
     def send_message(self, msg, sender, recipient):
         try:
@@ -60,13 +47,13 @@ class SMTP_Connection:
 
 
 
-'''
+
 #Test function to test the functionalities of SMTP_Connection
 def main_test():
-    user = "radical-awesome@hotmail.com"
-    password = getpass.getpass("Input password: ")
+    user = ""
+    password = ""
 
-    test_msg = SMTP_Connection()
+    test_msg = SMTP_Connection("smtp.office365.com", 587)
     test_msg.connect(user, password)
 
     placeholders = dict()
@@ -75,7 +62,7 @@ def main_test():
     placeholders['name'] = "Arshad"
     placeholders['department_code'] = "SOC"
 
-    receiver = "fieryradical@gmail.com"
+    receiver = ""
 
     test_msg.send_message(test_msg.craft_message(user, receiver, placeholders), user, receiver)
     print("Message Sent")
@@ -84,7 +71,7 @@ def main_test():
 
 if __name__ == "__main__":
     main_test()
-'''
+
 
         
 
