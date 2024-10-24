@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Uploaded File Contents</h1>
+<table border="1" cellpadding="5">
+    <tr>
+    {% for row in data %}
+    <td>{{ row }}</td>
+    {% endfor %}
+    </tr>
+</table>
+<a href="{{ url_for('index') }}">Back to Home</a>
+{% endblock %}
