@@ -33,12 +33,15 @@ def upload_file():
         filename = file.filename
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
-        # Read and interpret the file as needed
+        # Read and interpret the file
+
+        data = []
         with open(filepath, 'r') as f:
-            content = f.read()
-            # Process the content as needed
-        flash('File successfully uploaded and processed')
-        return redirect(url_for('index'))
+            line = " "
+            while line != "":
+                line = f.readline()
+                data.append(line)
+        return render_template('upload.html', data=data)
 
 @app.route('/about')
 def about():
