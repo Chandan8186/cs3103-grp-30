@@ -1,3 +1,5 @@
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 import pandas as pd
 
 class Parser:
@@ -15,7 +17,7 @@ class Parser:
 
     Sample usage:
     parser = Parser('myself@gmail.com', 'data.csv', 'body.txt')
-    emails = parser.prepare_all_emails('department-A5')
+    emails = parser.prepare_all_emails_MIMEMultipart('department-A5')
     # send emails
     parser.update_report_data(emails)
     report = parser.prepare_report()
@@ -93,7 +95,7 @@ class Parser:
 
     def prepare_all_emails(self, department='all'):
         """
-        Prepares email subject and body for all recipients.
+        Prepares email subject and body for all recipients in string format.
         
         Parameters:
         department (str): Department code to filter by.
@@ -124,6 +126,46 @@ class Parser:
             subject, body = self._prepare_email_content(template_subject, template_body, emails[i])
             emails[i]['subject'] = subject
             emails[i]['body'] = body
+
+        return emails
+
+    def prepare_all_emails_MIMEMultipart(self, department='all'):
+        """
+        Prepares email subject and body for all recipients in MIMEMultipart format.
+        
+        Parameters:
+        department (str): Department code to filter by.
+
+        Returns:
+        list of dicts, each dict with email, name, department, email_object (which is a MIMEMultipart object)
+        """
+        # 1. Read email IDs, names and department codes
+        try:
+            mail_data_df = self._read_mail_data()
+        except Exception as e:
+            print(f"Error reading CSV file: {e}")
+            return None
+
+        # 2. Filter by department code
+        filtered_mail_data_df = self._filter_by_department(mail_data_df, department)
+        emails = filtered_mail_data_df.to_dict(orient='records')
+
+        # 3. Read template subject and body
+        try:
+            template_subject, template_body = self._read_mail_body()
+        except Exception as e:
+            print(f"Error reading template file: {e}")
+            return None
+    
+        # 4. Prepare all emails
+        for i in range(len(emails)):
+            subject, body = self._prepare_email_content(template_subject, template_body, emails[i])
+            msg = MIMEMultipart()
+            msg['From'] = self.sender        
+            msg['To'] = emails[i]['email']        
+            msg['Subject'] = subject
+            msg.attach(MIMEText(body, 'html'))
+            emails[i]['email_object'] = msg
 
         return emails
 
