@@ -1,6 +1,11 @@
+from parser import *
+from O365 import Account, FileSystemTokenBackend
+from O365 import Message as O365Message
+
+import os
 import smtplib
 import sys
-from parser import *
+
 
 class SMTP_Connection:
     def __init__(self, host, port, user, password):
@@ -49,17 +54,107 @@ class SMTP_Connection:
             except smtplib.SMTPNotSupportedError:
                 print("Server got some beef with SMTPUTF8")
 
+class OutlookEmailSender:
+    def __init__(self, client_id, client_secret, token_path='.'):
+        """
+        Initialize OAuth authentication for Outlook
+        
+        Args:
+            client_id (str): Azure App Registration client ID
+            client_secret (str): Azure App Registration client secret
+            token_path (str): Path to store OAuth tokens
+        """
+        self.client_id = client_id
+        self.client_secret = client_secret
+        
+        # Define OAuth scopes
+        self.scopes = [
+            'https://graph.microsoft.com/Mail.Send',
+            'https://graph.microsoft.com/Mail.ReadWrite'
+        ]
+        
+        # Set up token backend
+        self.token_backend = FileSystemTokenBackend(
+            token_path=token_path,
+            token_filename='o365_token.txt'
+        )
+        
+        # Initialize account
+        self.account = Account(self.client_id,
+                             token_backend=self.token_backend,
+                             scopes=self.scopes,
+                             auth_flow_type='public')
+
+    def authenticate(self):
+        """
+        Perform OAuth authentication
+        Returns:
+            bool: True if authentication successful
+        """
+        if not self.account.is_authenticated:
+            # This will open a web browser for authentication
+            result = self.account.authenticate()
+            print("Authentication successful!" if result else "Authentication failed!")
+            return result
+        return True
+
+    def send_email(self, to_email, subject, body, attachments=None):
+        """
+        Send an email using OAuth authentication
+        
+        Args:
+            to_email (str): Recipient's email address
+            subject (str): Email subject
+            body (str): Email body content
+            attachments (list): List of file paths to attach (optional)
+            
+        Returns:
+            bool: True if email sent successfully
+        """
+        try:
+            if not self.authenticate():
+                print("Authentication failed!")
+                return False
+
+            # Create message
+            message = self.account.new_message()
+            message.to.add(to_email)
+            message.subject = subject
+            message.body = body
+
+            # Add attachments if any
+            if attachments:
+                for file_path in attachments:
+                    if os.path.exists(file_path):
+                        message.attachments.add(file_path)
+
+            # Send the message
+            result = message.send()
+            print("Email sent successfully!" if result else "Failed to send email!")
+            return result
+
+        except Exception as e:
+            print(f"Error sending email: {str(e)}")
+            return False
+
+
 #Test function to test the functionalities of SMTP_Connection
 def main_test():
-    user = ""
-    password = ""
+    user = "" # If using outlook, provide client id
+    password = "" # If using outlook, provide client secret
 
-    test_msg = SMTP_Connection("smtp.office365.com", 587, user, password)
-    test_msg.connect()
+    test_outlook = OutlookEmailSender("", "")
 
-    print("Login successful!")
+    test_outlook.authenticate()
 
-    test_msg.terminate()
+    test_outlook.send_email("", "", "", None)
+
+    #test_msg = SMTP_Connection("smtp-mail.outlook.com", 587, user, password)
+    #test_msg.connect()
+
+    #print("Login successful!")
+
+    #test_msg.terminate()
 
 if __name__ == "__main__":
     main_test()
