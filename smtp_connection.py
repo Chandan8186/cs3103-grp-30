@@ -1,9 +1,6 @@
-import getpass
 import smtplib
 import sys
-
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+from parser import *
 
 class SMTP_Connection:
     def __init__(self, host, port, user, password):
@@ -26,8 +23,10 @@ class SMTP_Connection:
             sys.exit(1)
         except smtplib.SMTPNotSupportedError:
             print("Server has a major skill issue by not having SMTP >:(")
-        except smtplib.SMTPException:
+        except smtplib.SMTPException as smtpErr:
             print("Your standard so high no wonder no authentication methods want you")
+            print(str(smtpErr))
+            sys.exit(1)
     
     def terminate(self):
         self.smtp.quit()
@@ -42,8 +41,10 @@ class SMTP_Connection:
             print("Just now server like you now it doesn't what you do sia")
         except smtplib.SMTPSenderRefused:
             print("Wah you kena blacklisted by server ah?")
-        except smtplib.SMTPDataError:
+        except smtplib.SMTPDataError as dataErr:
             print("Something cock up")
+            print(str(dataErr))
+            sys.exit(2)
         except smtplib.SMTPNotSupportedError:
             print("Server got some beef with SMTPUTF8")
 
