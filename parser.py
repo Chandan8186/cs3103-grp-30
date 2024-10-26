@@ -7,7 +7,7 @@ class Parser:
     Attributes:
     sender (str): Sender's email ID.
     mail_data_path (str): Path to mail data CSV file.
-    mail_body_path (str): Path to mail body CSV file.
+    mail_body_path (str): Path to mail body txt file.
 
     Mail data csv headers: email, name, department
 
