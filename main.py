@@ -5,6 +5,7 @@ It contains the definition of routes and views for the application.
 
 from flask import Flask, render_template, request, redirect, url_for, flash
 import os
+from parser import Parser
 app = Flask(__name__)
 
 wsgi_app = app.wsgi_app
@@ -22,35 +23,48 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    if 'file' not in request.files:
-        flash('No file part')
+    if 'csv_file' not in request.files or 'body_file' not in request.files:
+        flash('Missing file(s)')
         return redirect(url_for('index'))
-    file = request.files['file']
-    if file.filename == '':
-        flash('No selected file')
+    csv_file = request.files['csv_file']
+    body_file = request.files['body_file']
+    if csv_file.filename == '' or body_file.filename == '':
+        flash('No selected file(s)')
         return redirect(url_for('index'))
-    if file:
-        filename = file.filename
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-        # Read and interpret the file
+    if csv_file and body_file:
+        csv_name = csv_file.filename
+        csvpath = os.path.join(app.config['UPLOAD_FOLDER'], csv_name)
+        csv_file.save(csvpath)
 
-        data = []
-        with open(filepath, 'r') as f:
-            line = " "
-            while line != "":
-                line = f.readline()
-                data.append(line)
-        return render_template('upload.html', data=data)
+        body_name = body_file.filename
+        bodypath = os.path.join(app.config['UPLOAD_FOLDER'], body_name)
+        body_file.save(bodypath)
+
+        parser = Parser('myself@gmail.com', csvpath, bodypath)
+        emails = parser.prepare_all_emails('department-A5')
+        try:
+            parser = Parser('myself@gmail.com', csvpath, bodypath)
+            
+            emails = parser.prepare_all_emails('all')
+            parser.update_report_data(emails)
+            report = parser.prepare_report()
+            
+            return render_template('upload.html', emails=emails, report=report)
+        except Exception as e:
+            flash(f'An error occurred: {e}')
+            return redirect(url_for('index'))
 
 @app.route('/about')
 def about():
     return render_template('about.html')
 
 if __name__ == '__main__':
+    """
     HOST = os.environ.get('SERVER_HOST', 'localhost')
     try:
         PORT = int(os.environ.get('SERVER_PORT', '5555'))
     except ValueError:
         PORT = 5555
     app.run(HOST, PORT)
+    """
+    app.run(debug=True)

@@ -1,0 +1,11 @@
+Welcome to the #department# Team, #name#!
+
+Dear #name#,
+
+We are excited to welcome you to the #department# department at our company. Your expertise and enthusiasm will be a valuable addition to our team.
+
+Please let us know if you have any questions.
+
+Best regards,
+[Your Name]
+[Your Position]
