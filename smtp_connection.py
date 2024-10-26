@@ -32,24 +32,22 @@ class SMTP_Connection:
         self.smtp.quit()
     
 
-    def send_message(self, recipient, msg):
-        try:
-            self.smtp.sendmail(self.user, recipient, msg)
-        except smtplib.SMTPRecipientsRefused:
-            print("Bro you sending email to ghost ah?")
-        except smtplib.SMTPHeloError:
-            print("Just now server like you now it doesn't what you do sia")
-        except smtplib.SMTPSenderRefused:
-            print("Wah you kena blacklisted by server ah?")
-        except smtplib.SMTPDataError as dataErr:
-            print("Something cock up")
-            print(str(dataErr))
-            sys.exit(2)
-        except smtplib.SMTPNotSupportedError:
-            print("Server got some beef with SMTPUTF8")
-
-
-
+    def send_message(self, recipients, msg_bodies):
+        for i in range(len(recipients)):
+            try:
+                self.smtp.sendmail(self.user, recipients[i], msg_bodies[i])
+            except smtplib.SMTPRecipientsRefused:
+                print("Bro you sending email to ghost ah?")
+            except smtplib.SMTPHeloError:
+                print("Just now server like you now it doesn't what you do sia")
+            except smtplib.SMTPSenderRefused:
+                print("Wah you kena blacklisted by server ah?")
+            except smtplib.SMTPDataError as dataErr:
+                print("Something cock up")
+                print(str(dataErr[1]))
+                sys.exit(2)
+            except smtplib.SMTPNotSupportedError:
+                print("Server got some beef with SMTPUTF8")
 
 #Test function to test the functionalities of SMTP_Connection
 def main_test():
