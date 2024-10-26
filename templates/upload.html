@@ -1,13 +1,30 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Uploaded File Contents</h1>
-<table border="1" cellpadding="5">
+<h1>Processed Emails</h1>
+<table border="1">
     <tr>
-    {% for row in data %}
-    <td>{{ row }}</td>
-    {% endfor %}
+        <th>Email</th>
+        <th>Name</th>
+        <th>Department</th>
+        <th>Subject</th>
+        <th>Body</th>
     </tr>
+    {% for email in emails %}
+        <tr>
+            <td>{{ email.email }}</td>
+            <td>{{ email.name }}</td>
+            <td>{{ email.department }}</td>
+            <td>{{ email.subject }}</td>
+            <td>{{ email.body }}</td>
+        </tr>
+    {% endfor %}
 </table>
+<h2>Report</h2>
+{% if report %}
+    <pre>{{ report }}</pre>
+{% else %}
+    <p>No report available.</p>
+{% endif %}
 <a href="{{ url_for('index') }}">Back to Home</a>
 {% endblock %}
