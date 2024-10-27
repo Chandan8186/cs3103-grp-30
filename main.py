@@ -9,12 +9,12 @@ from smtp_connection import SMTP_Connection, OutlookEmailSender
 
 import getpass
 import os
-import re
 
 app = Flask(__name__)
 
 wsgi_app = app.wsgi_app
 
+SMTP_SERVERS = {"outlook.com": None, "yahoo.com": "smtp.mail.yahoo.com", "gmail.com": "smtp.gmail.com"}
 
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -25,6 +25,39 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 @app.route('/')
 def index():
     return render_template('index.html')
+
+def login():
+    # To obtain from user using GUI
+    user_email = "myself@gmail.com"
+    client_id = ""
+    client_secret = ""
+    token_path = "."
+
+    email_sender = None
+    ampersand_idx = user_email.rfind("@")
+    if ampersand_idx == -1:
+        print("Not a valid email address!")
+        return None, None
+
+    email_client = user_email[ampersand_idx + 1:]
+
+    if email_client not in SMTP_SERVERS:
+        print("Your email client is currently unsupported!")
+        return None, None
+
+    if email_client == "outlook.com":
+        email_sender = OutlookEmailSender(client_id, client_secret, token_path)
+        if (not email_sender.authenticate()):
+            print("Unable to authenticate!") # Or perhaps a message back to GUI saying authentication issue
+            return None, None
+
+    else:
+        smtp_url = SMTP_SERVERS[email_client]
+        password = getpass.getpass("Enter your app password: ") # Or we can try handling the password input on the frontend
+        email_sender = SMTP_Connection(smtp_url, 587, user_email, password)
+        email_sender.connect()
+
+    return user_email, email_sender
 
 #goes to the upload.html website
 #csv_file and body_file comes from index.html website
@@ -49,50 +82,20 @@ def upload_file():
         body_file.save(bodypath)
 
         #using the parser class to prepare the emails
-        user = "myself@gmail.com"
-        parser = Parser(user, csvpath, bodypath)
-        emails = parser.prepare_all_emails('department-A5')
+        department = "HR" # Can be "all"
+        user, email_sender = login()
+        if user == None:
+            redirect(url_for(index))
+
         try:
             parser = Parser(user, csvpath, bodypath)
+            emails = parser.prepare_all_emails(department)
+            for email in emails:
+                recipient = email['email']
+                subject = email['subject']
+                body = email['body']
+                email_sender.send_message(recipient, subject, body)
             
-            # ---------------------------------- How smtp_connection.py can be incorporated here ---------------------------------------
-            # Prepare and send email to recipients
-            # If email is a yahoomail or gmail, use SMTP_Connection class and prepare email contents in MIMEMUltipart
-            # Else, use OutLookEmailSender class and prepare email contents in plain
-            if (re.search(r".*@outlook.com", user)):
-                email_sender = OutlookEmailSender("", "")
-                
-                if (not email_sender.authenticate()):
-                    print("Unable to authenticate!") # Or perhaps a message back to GUI saying authentication issue
-                    return redirect(url_for(index))
-
-                emails = parser.prepare_all_emails('all')
-
-                for email in emails:
-                    recipient = email["email"]
-                    subject = email['subject']
-                    body = email['body']
-
-                    email_sender.send_email(recipient, subject, body)
-
-            else:
-                email_sender = None
-                password = getpass.getpass("Enter your app password: ") # Or we can try handling the password input on the frontend
-                if (re.search(r".*@yahoo.com", user)): 
-                    email_sender = SMTP_Connection("smtp.mail.yahoo.com", 587, user, password)
-                elif (re.search(r".*@gmail.com", user)):
-                    email_sender = SMTP_Connection("smtp.gmail.com", 587, user, password)
-                else:
-                    return redirect(url_for(index))
-                
-                emails = parser.prepare_all_emails_MIMEMultipart('all')
-
-                for email in emails:
-                    recipient = email['email']
-                    msg = email['email_object']
-                    email_sender.send_message(recipient, msg)
-                
-                
             parser.update_report_data(emails)
             report = parser.prepare_report()
 
@@ -104,9 +107,6 @@ def upload_file():
             flash(f'An error occurred: {e}')
             return redirect(url_for('index'))
 
-        
-
-        
 
 #if needed
 @app.route('/about')
