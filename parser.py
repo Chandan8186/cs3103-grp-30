@@ -1,6 +1,9 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from image_link import make_image_links
 import pandas as pd
+import asyncio
+import hashlib
 
 class Parser:
     """
@@ -90,7 +93,16 @@ class Parser:
         body = template_body
         body = body.replace('#name#', recipient_data['name'])
         body = body.replace('#department#', recipient_data['department'])
-        return subject, body
+
+        md5_hash = hashlib.md5((subject + body).encode()).hexdigest()
+        return subject, body, md5_hash
+
+    def _attach_transparent_images(self, emails):
+        hashes = [email['hash'] for email in emails]
+        image_links = asyncio.run(make_image_links(hashes))
+
+        for i in range(len(emails)):
+            emails[i]['body'] = emails[i]['body'].replace('</body>', f'<img src="{image_links[i]}"></body>')
 
     def prepare_all_emails(self, department='all'):
         """
@@ -122,9 +134,13 @@ class Parser:
     
         # 4. Prepare all emails
         for i in range(len(emails)):
-            subject, body = self._prepare_email_content(template_subject, template_body, emails[i])
+            subject, body, md5_hash = self._prepare_email_content(template_subject, template_body, emails[i])
             emails[i]['subject'] = subject
             emails[i]['body'] = body
+            emails[i]['hash'] = md5_hash
+        
+        # 5. Attach 1x1 transparent images
+        self._attach_transparent_images(emails)
 
         return emails
 
