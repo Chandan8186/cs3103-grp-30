@@ -2,7 +2,6 @@ from parser import *
 from O365 import Account, FileSystemTokenBackend
 from O365 import Message as O365Message
 
-import os
 import smtplib
 import sys
 
@@ -20,14 +19,18 @@ class SMTP_Connection:
         self.smtp.starttls()
         try:
             self.smtp.login(self.user, self.password)
-        except smtplib.SMTPHeloError:
+        except smtplib.SMTPHeloError as HeloErr:
             print('Server did not like us :(')
-        except smtplib.SMTPAuthenticationError as e:
+            print(str(HeloErr))
+            sys.exit(2)
+        except smtplib.SMTPAuthenticationError as AuthErr:
             print("Invalid Username/Password! Sure or not ur password/username correct?")
-            print(str(e))
+            print(str(AuthErr))
             sys.exit(1)
-        except smtplib.SMTPNotSupportedError:
+        except smtplib.SMTPNotSupportedError as SMTPNotSupportedErr:
             print("Server has a major skill issue by not having SMTP >:(")
+            print(str(SMTPNotSupportedErr))
+            sys.exit(1)
         except smtplib.SMTPException as smtpErr:
             print("Your standard so high no wonder no authentication methods want you")
             print(str(smtpErr))
@@ -37,22 +40,29 @@ class SMTP_Connection:
         self.smtp.quit()
     
 
-    def send_message(self, recipients, msg_bodies):
-        for i in range(len(recipients)):
-            try:
-                self.smtp.sendmail(self.user, recipients[i], msg_bodies[i])
-            except smtplib.SMTPRecipientsRefused:
-                print("Bro you sending email to ghost ah?")
-            except smtplib.SMTPHeloError:
-                print("Just now server like you now it doesn't what you do sia")
-            except smtplib.SMTPSenderRefused:
-                print("Wah you kena blacklisted by server ah?")
-            except smtplib.SMTPDataError as dataErr:
-                print("Something cock up")
-                print(str(dataErr[1]))
-                sys.exit(2)
-            except smtplib.SMTPNotSupportedError:
-                print("Server got some beef with SMTPUTF8")
+    def send_message(self, recipient, msg):
+        try:
+            self.smtp.sendmail(self.user, recipient, msg)
+        except smtplib.SMTPRecipientsRefused as RecipientErr:
+            print("Bro you sending email to ghost ah?")
+            print(str(RecipientErr))
+            sys.exit(2)
+        except smtplib.SMTPHeloError as HeloErr:
+            print("Just now server like you now it doesn't what you do sia")
+            print(str(HeloErr))
+            sys.exit(2)
+        except smtplib.SMTPSenderRefused as SenderRefusedErr:
+            print("Wah you kena blacklisted by server ah?")
+            print(str(SenderRefusedErr))
+            sys.exit(2)
+        except smtplib.SMTPDataError as dataErr:
+            print("Something cock up")
+            print(str(dataErr))
+            sys.exit(2)
+        except smtplib.SMTPNotSupportedError as SMTPNotSupportedErr:
+            print("Server got some beef with SMTPUTF8")
+            print(str(SMTPNotSupportedErr))
+            sys.exit(1)
 
 class OutlookEmailSender:
     def __init__(self, client_id, client_secret, token_path='.'):
@@ -98,7 +108,7 @@ class OutlookEmailSender:
             return result
         return True
 
-    def send_email(self, to_email, subject, body, attachments=None):
+    def send_email(self, recipient, subject, body):
         """
         Send an email using OAuth authentication
         
@@ -111,22 +121,18 @@ class OutlookEmailSender:
         Returns:
             bool: True if email sent successfully
         """
+
         try:
             if not self.authenticate():
                 print("Authentication failed!")
                 return False
+            
 
             # Create message
             message = self.account.new_message()
-            message.to.add(to_email)
+            message.to.add(recipient)
             message.subject = subject
             message.body = body
-
-            # Add attachments if any
-            if attachments:
-                for file_path in attachments:
-                    if os.path.exists(file_path):
-                        message.attachments.add(file_path)
 
             # Send the message
             result = message.send()
@@ -138,26 +144,6 @@ class OutlookEmailSender:
             return False
 
 
-#Test function to test the functionalities of SMTP_Connection
-def main_test():
-    user = "" # If using outlook, provide client id
-    password = "" # If using outlook, provide client secret
-
-    test_outlook = OutlookEmailSender("", "")
-
-    test_outlook.authenticate()
-
-    test_outlook.send_email("", "", "", None)
-
-    #test_msg = SMTP_Connection("smtp-mail.outlook.com", 587, user, password)
-    #test_msg.connect()
-
-    #print("Login successful!")
-
-    #test_msg.terminate()
-
-if __name__ == "__main__":
-    main_test()
 
 
         

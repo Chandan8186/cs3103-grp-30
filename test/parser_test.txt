@@ -1,4 +1,0 @@
-This is a test email for #name# from #department#
-
-
-<html><h1>Konnichiwa #name#, #department#</h1></html>
