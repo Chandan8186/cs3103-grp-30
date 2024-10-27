@@ -36,8 +36,7 @@ class Parser:
         """
         Reads mail data CSV file.
 
-        Returns:
-        pd.df: DataFrame containing emails, names and departments.
+        Returns: pd.df: DataFrame containing emails, names and departments.
         """
         df = pd.read_csv(self.mail_data_path, dtype=str)
         required_fields = ['email', 'name', 'department']
@@ -46,7 +45,7 @@ class Parser:
         if df.isna().any().any():
             raise ValueError(f"{self.mail_data_path} must not contain empty values")
         return df
-
+    
     def _filter_by_department(self, mail_data_df, department='all'):
         """
         Filters mail_data df by given department.
