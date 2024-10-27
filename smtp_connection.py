@@ -1,6 +1,7 @@
 from parser import *
 from O365 import Account, FileSystemTokenBackend
 from O365 import Message as O365Message
+from email.message import EmailMessage
 
 import smtplib
 import sys
@@ -40,9 +41,13 @@ class SMTP_Connection:
         self.smtp.quit()
     
 
-    def send_message(self, recipient, msg):
+    def send_message(self, recipient, subject, body):
+        msg = EmailMessage()
+        msg["To"] = recipient
+        msg["Subject"] = subject
+        msg.set_content(body, subtype="html")
         try:
-            self.smtp.sendmail(self.user, recipient, msg)
+            self.smtp.send_message(msg, self.user)
         except smtplib.SMTPRecipientsRefused as RecipientErr:
             print("Bro you sending email to ghost ah?")
             print(str(RecipientErr))
@@ -142,10 +147,3 @@ class OutlookEmailSender:
         except Exception as e:
             print(f"Error sending email: {str(e)}")
             return False
-
-
-
-
-        
-
-
