@@ -4,8 +4,13 @@ It contains the definition of routes and views for the application.
 """
 
 from flask import Flask, render_template, request, redirect, url_for, flash
-import os
 from parser import Parser
+from smtp_connection import SMTP_Connection, OutlookEmailSender
+
+import getpass
+import os
+import re
+
 app = Flask(__name__)
 
 wsgi_app = app.wsgi_app
@@ -44,21 +49,64 @@ def upload_file():
         body_file.save(bodypath)
 
         #using the parser class to prepare the emails
-        parser = Parser('myself@gmail.com', csvpath, bodypath)
+        user = "myself@gmail.com"
+        parser = Parser(user, csvpath, bodypath)
         emails = parser.prepare_all_emails('department-A5')
         try:
-            parser = Parser('myself@gmail.com', csvpath, bodypath)
+            parser = Parser(user, csvpath, bodypath)
             
-            emails = parser.prepare_all_emails('all')
+            # ---------------------------------- How smtp_connection.py can be incorporated here ---------------------------------------
+            # Prepare and send email to recipients
+            # If email is a yahoomail or gmail, use SMTP_Connection class and prepare email contents in MIMEMUltipart
+            # Else, use OutLookEmailSender class and prepare email contents in plain
+            if (re.search(r".*@outlook.com", user)):
+                email_sender = OutlookEmailSender("", "")
+                
+                if (not email_sender.authenticate()):
+                    print("Unable to authenticate!") # Or perhaps a message back to GUI saying authentication issue
+                    return redirect(url_for(index))
+
+                emails = parser.prepare_all_emails('all')
+
+                for email in emails:
+                    recipient = email["email"]
+                    subject = email['subject']
+                    body = email['body']
+
+                    email_sender.send_email(recipient, subject, body)
+
+            else:
+                email_sender = None
+                password = getpass.getpass("Enter your app password: ") # Or we can try handling the password input on the frontend
+                if (re.search(r".*@yahoo.com", user)): 
+                    email_sender = SMTP_Connection("smtp.mail.yahoo.com", 587, user, password)
+                elif (re.search(r".*@gmail.com", user)):
+                    email_sender = SMTP_Connection("smtp.gmail.com", 587, user, password)
+                else:
+                    return redirect(url_for(index))
+                
+                emails = parser.prepare_all_emails_MIMEMultipart('all')
+
+                for email in emails:
+                    recipient = email['email']
+                    msg = email['email_object']
+                    email_sender.send_message(recipient, msg)
+                
+                
             parser.update_report_data(emails)
             report = parser.prepare_report()
-            
+
+            # ---------------------------------------------------------------------------------------------------------------------------
             #make a table to show the details
             #could add a count
             return render_template('upload.html', emails=emails, report=report)
         except Exception as e:
             flash(f'An error occurred: {e}')
             return redirect(url_for('index'))
+
+        
+
+        
 
 #if needed
 @app.route('/about')
