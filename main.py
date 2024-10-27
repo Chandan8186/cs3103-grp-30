@@ -21,6 +21,8 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def index():
     return render_template('index.html')
 
+#goes to the upload.html website
+#csv_file and body_file comes from index.html website
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'csv_file' not in request.files or 'body_file' not in request.files:
@@ -32,6 +34,7 @@ def upload_file():
         flash('No selected file(s)')
         return redirect(url_for('index'))
     if csv_file and body_file:
+        #get file paths for both and put them in the uploads folder
         csv_name = csv_file.filename
         csvpath = os.path.join(app.config['UPLOAD_FOLDER'], csv_name)
         csv_file.save(csvpath)
@@ -40,6 +43,7 @@ def upload_file():
         bodypath = os.path.join(app.config['UPLOAD_FOLDER'], body_name)
         body_file.save(bodypath)
 
+        #using the parser class to prepare the emails
         parser = Parser('myself@gmail.com', csvpath, bodypath)
         emails = parser.prepare_all_emails('department-A5')
         try:
@@ -49,11 +53,14 @@ def upload_file():
             parser.update_report_data(emails)
             report = parser.prepare_report()
             
+            #make a table to show the details
+            #could add a count
             return render_template('upload.html', emails=emails, report=report)
         except Exception as e:
             flash(f'An error occurred: {e}')
             return redirect(url_for('index'))
 
+#if needed
 @app.route('/about')
 def about():
     return render_template('about.html')
