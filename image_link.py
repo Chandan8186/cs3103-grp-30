@@ -59,8 +59,8 @@ class Image_Count_Manager:
         self.event_loop = asyncio.new_event_loop()
         self.event_loop.run_until_complete(self._create_session())
 
-    def __exit__(self):
-        self.event_loop.run_until_complete(self.session.close())
+    def __del__(self):
+        self.session.detach()
         self.event_loop.close()
 
     async def _create_session(self):
