@@ -102,7 +102,7 @@ class Parser:
         for i in range(len(emails)):
             emails[i]['body'] = emails[i]['body'].replace('</body>', f'<img src="{image_links[i]}"></body>', 1)
 
-    def prepare_all_emails(self, department='all'):
+    def prepare_all_emails(self, department='all', attach_transparent_images=True):
         """
         Prepares email subject and body for all recipients in string format.
         
@@ -139,7 +139,8 @@ class Parser:
             emails[i]['id'] = str(i)
         
         # 5. Attach 1x1 transparent images
-        self._attach_transparent_images(emails)
+        if attach_transparent_images:
+            self._attach_transparent_images(emails)
 
         return emails
 

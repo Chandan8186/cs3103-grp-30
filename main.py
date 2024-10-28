@@ -110,12 +110,15 @@ def upload_file():
         department = "HR" # Can be "all"
         try:
             parser = Parser(user, csvpath, bodypath)
-            emails = parser.prepare_all_emails(department)
-            for email in emails:
-                recipient = email['email']
-                subject = email['subject']
-                body = email['body']
-                user.send_message(recipient, subject, body)
+            if "view-counts" in request.form:
+                emails = parser.prepare_all_emails(department, attach_transparent_images=False)
+            else:
+                emails = parser.prepare_all_emails(department)
+                for email in emails:
+                    recipient = email['email']
+                    subject = email['subject']
+                    body = email['body']
+                    user.send_message(recipient, subject, body)
             
             parser.update_report_data(emails)
             report = parser.prepare_report()
