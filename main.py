@@ -8,12 +8,8 @@ from flask_login import LoginManager, login_user, login_required, logout_user
 from flask_dance.contrib.google import make_google_blueprint, google
 from oauthlib.oauth2.rfc6749.errors import InvalidGrantError, TokenExpiredError 
 from parser import Parser
-<<<<<<< Updated upstream
-from smtp_connection import SMTP_Connection, OutlookEmailSender
-=======
 from image_link import Image_Count_Manager
 from login import User, LoginForm
->>>>>>> Stashed changes
 
 import os
 
@@ -38,6 +34,8 @@ wsgi_app = app.wsgi_app
 
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+image_count_manager = Image_Count_Manager()
 
 # Ensure the upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -121,15 +119,17 @@ def upload_file():
             
             parser.update_report_data(emails)
             report = parser.prepare_report()
+            hashes = [email['hash'] for email in emails]
+            image_count_manager.update_unique_id_list(hashes)
 
-            # ---------------------------------------------------------------------------------------------------------------------------
-            #make a table to show the details
-            #could add a count
             return render_template('upload.html', emails=emails, report=report)
         except Exception as e:
             flash(f'An error occurred: {e}')
             return redirect(url_for(index))
 
+@app.get("/update_count")
+def update_count():
+    return image_count_manager.get_image_counts()
 
 #if needed
 @app.route('/about')
