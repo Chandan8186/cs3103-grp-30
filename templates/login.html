@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% from "_formhelpers.html" import render_field %}
+
+{% block content %}
+<h1>Welcome to Smart Mailer</h1>
+<p>Login to get started.</p>
+
+<div style="display: table-row">
+    <form method=post>
+        <dl>
+            {{ render_field(form.email) }}
+            <br/>
+            {{ render_field(form.password) }}
+        </dl>
+        <p><input type=submit value=Login>
+    </form>
+    <div style="width: 200px; display: table-cell;"></div>
+    <a href="{{ url_for('login_google') }}">Login with Google OAuth</a>
+    <br/><br/>
+    <a href="{{ url_for('index') }}">Login with Outlook OAuth</a>
+</div>
+
+{% endblock %}

@@ -41,13 +41,9 @@ class SMTP_Connection:
         self.smtp.quit()
     
 
-    def send_message(self, recipient, subject, body):
-        msg = EmailMessage()
-        msg["To"] = recipient
-        msg["Subject"] = subject
-        msg.set_content(body, subtype="html")
+    def send_message(self, msg):
         try:
-            self.smtp.send_message(msg, self.user)
+            self.smtp.send_message(msg)
         except smtplib.SMTPRecipientsRefused as RecipientErr:
             print("Bro you sending email to ghost ah?")
             print(str(RecipientErr))
