@@ -3,11 +3,10 @@ Welcome to the #department# Team, #name#!
 <html>
   <body>
     <p>Dear #name#,</p>
-    </br>
+    <br/>
     <p>We are <strong>excited</strong> to welcome you to the #department# department at our company. Your expertise and enthusiasm will be a valuable addition to our team.</p>
-    </br>
     <p>Please let us know if you have any questions!</p>
-    </br>
+    <br/>
     <p>Best regards,</p>
     <p>[Your Name]</p>
     <p>[Your Position]</p>
