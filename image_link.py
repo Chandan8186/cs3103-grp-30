@@ -55,10 +55,16 @@ async def _get_image_count(session, unique_id) -> int:
               # Ensures the input is a string, as there is no type checking for unique_id
               "id": str(unique_id)}
 
+<<<<<<< Updated upstream
     async with session.get("https://ulvis.net/API/read/get", params=params) as redirect:
         if not redirect.ok:
             print("Ulvis server is down... Returning counter stat as 0.")
             return 0
+=======
+    def __del__(self):
+        self.session.detach()
+        self.event_loop.close()
+>>>>>>> Stashed changes
 
         parsed_redirect = await redirect.json()
 
