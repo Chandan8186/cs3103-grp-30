@@ -136,9 +136,10 @@ class Parser:
             emails[i]['subject'] = subject
             emails[i]['body'] = body
             emails[i]['hash'] = md5_hash
+            emails[i]['id'] = str(i)
         
         # 5. Attach 1x1 transparent images
-        # self._attach_transparent_images(emails) # Commented out for testing to avoid spamming server
+        self._attach_transparent_images(emails)
 
         return emails
 
