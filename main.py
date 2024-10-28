@@ -15,7 +15,7 @@ app = Flask(__name__)
 
 wsgi_app = app.wsgi_app
 
-SMTP_SERVERS = {"outlook.com": None, "yahoo.com": "smtp.mail.yahoo.com", "gmail.com": "smtp.gmail.com"}
+SMTP_SERVERS = {"outlook.com": None, "hotmail.com": None, "yahoo.com": "smtp.mail.yahoo.com", "gmail.com": "smtp.gmail.com"}
 
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -48,7 +48,7 @@ def login():
         print("Your email client is currently unsupported!")
         return None, None
 
-    if email_client == "outlook.com":
+    if email_client == "hotmail.com" or email_client == "outlook.com":
         email_sender = OutlookEmailSender(client_id, client_secret, token_path)
         if (not email_sender.authenticate()):
             print("Unable to authenticate!") # Or perhaps a message back to GUI saying authentication issue
@@ -85,10 +85,10 @@ def upload_file():
         body_file.save(bodypath)
 
         #using the parser class to prepare the emails
-        department = "HR" # Can be "all"
+        department = "all" # Can be "all"
         user, email_sender = login()
         if user == None:
-            redirect(url_for(index))
+            return redirect(url_for(index))
 
         try:
             parser = Parser(user, csvpath, bodypath)
@@ -107,7 +107,7 @@ def upload_file():
             return render_template('upload.html', emails=emails, report=report)
         except Exception as e:
             flash(f'An error occurred: {e}')
-            return redirect(url_for('index'))
+            return redirect(url_for(index))
 
 @app.get("/update_count")
 def update_count():

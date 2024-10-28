@@ -113,7 +113,7 @@ class OutlookEmailSender:
             return result
         return True
 
-    def send_email(self, recipient, subject, body):
+    def send_message(self, recipient, subject, body):
         """
         Send an email using OAuth authentication
         
