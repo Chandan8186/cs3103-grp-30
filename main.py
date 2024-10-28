@@ -5,6 +5,7 @@ It contains the definition of routes and views for the application.
 
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, login_user, login_required, logout_user
+from flask_dance.consumer import OAuth2ConsumerBlueprint
 from flask_dance.contrib.google import make_google_blueprint, google
 from oauthlib.oauth2.rfc6749.errors import InvalidGrantError, TokenExpiredError 
 from parser import Parser
@@ -14,14 +15,29 @@ from login import User, LoginForm
 import os
 
 app = Flask(__name__)
-app.secret_key = ""
-google_bp = make_google_blueprint(
+app.secret_key = "ilovecs3103"
+
+outlook_bp = OAuth2ConsumerBlueprint( 
+    "outlook", __name__, 
+    client_id="330dc871-0335-46d2-81eb-c09d3c2df450", 
+    client_secret="Kke8Q~iigu8ocq4rvRFOuApgIAR2ZOWuEyHXNbeS", 
+    token_url="https://login.microsoftonline.com/common/oauth2/v2.0/token", 
+    authorization_url="https://login.microsoftonline.com/common/oauth2/v2.0/authorize", 
+    scope=["https://graph.microsoft.com/Mail.Send", "https://graph.microsoft.com/Mail.ReadWrite"],
+    redirect_url=redirect(url_for('index'))
+    redirect_to="login_outlook" 
+) 
+
+'''google_bp = make_google_blueprint(
     client_id="",
     client_secret="",
     scope=["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/gmail.send"],
     redirect_to="login_google"
 )
-app.register_blueprint(google_bp, url_prefix="/login")
+app.register_blueprint(google_bp, url_prefix="/login")'''
+
+app.register_blueprint(outlook_bp, url_prefix="/login") 
+outlook = outlook_bp.session
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -62,9 +78,10 @@ def logout():
 def login():
     form = LoginForm(request.form)
     if request.method == 'POST' and form.validate():
-        user.login_smtp(form.email.data, form.password.data)
-        login_user(user)
-        next = request.args.get('next')
+
+        #user.login_smtp(form.email.data, form.password.data)
+        #login_user(user)
+        #next = request.args.get('next')
         # !TO VALIDATE IN PRODUCTION APP!
         # if not url_has_allowed_host_and_scheme(next, request.host):
         #     return flask.abort(400)
@@ -82,6 +99,13 @@ def login_google():
     
     user.login_google(email)
     return redirect(url_for('index'))
+
+@app.route('/login_outlook', methods =["GET"])
+def login_outlook():
+    print(outlook.authorized)
+    if not outlook.authorized:
+        return redirect(url_for("outlook.login"))
+    return render_template("index.html")
 
 #goes to the upload.html website
 #csv_file and body_file comes from index.html website

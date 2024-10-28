@@ -5,3 +5,4 @@ oauthlib
 wtforms
 aiohttp
 pandas
+smtplib
