@@ -100,7 +100,7 @@ class Parser:
         image_links = asyncio.run(make_image_links(hashes))
 
         for i in range(len(emails)):
-            emails[i]['body'] = emails[i]['body'].replace('</body>', f'<img src="{image_links[i]}"></body>')
+            emails[i]['body'] = emails[i]['body'].replace('</body>', f'<img src="{image_links[i]}"></body>', 1)
 
     def prepare_all_emails(self, department='all'):
         """
