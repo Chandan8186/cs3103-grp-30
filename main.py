@@ -44,7 +44,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def index():
     if not user.is_authenticated:
         return redirect(url_for('login'))
-    # google.get()
     return render_template('index.html')
 
 @login_manager.user_loader
@@ -88,6 +87,8 @@ def login_google():
 #csv_file and body_file comes from index.html website
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    if not user.is_authenticated:
+        return redirect(url_for('login'))
     if 'csv_file' not in request.files or 'body_file' not in request.files:
         flash('Missing file(s)')
         return redirect(url_for('index'))
@@ -128,7 +129,7 @@ def upload_file():
             return render_template('upload.html', emails=emails, report=report)
         except Exception as e:
             flash(f'An error occurred: {e}')
-            return redirect(url_for(index))
+            return redirect(url_for('index'))
 
 @app.get("/update_count")
 def update_count():

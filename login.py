@@ -13,7 +13,7 @@ def validate_email(form, field):
 
 class LoginForm(Form):
     email = StringField('Email Address', [validators.InputRequired("Please enter your email."), validate_email])
-    password = PasswordField('New Password', [validators.InputRequired("Please enter your password.")])
+    password = PasswordField('Password', [validators.InputRequired("Please enter your password.")])
 
 class User:
     def __init__(self):
