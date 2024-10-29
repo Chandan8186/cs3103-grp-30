@@ -10,14 +10,19 @@ class Parser:
     Attributes:
     mail_data_path (str): Path to mail data CSV file.
     mail_body_path (str): Path to mail body txt file.
+    report (dict): Dictionary storing number of emails sent to each department.
+    mail_data_df (pd.df): Dataframe containing mail data.
+    departments (set): Set of all unique departments.
+    subject (str): Mail subject template.
+    body (str): Mail body template.
 
     Mail data csv headers: email, name, department
 
     Mail body text file format: subject, followed by empty line, followed by body
 
     Sample usage:
-    parser = Parser('myself@gmail.com', 'data.csv', 'body.txt')
-    emails = parser.prepare_all_emails_MIMEMultipart('department-A5')
+    parser = Parser('data.csv', 'body.txt')
+    emails = parser.prepare_all_emails('department-A5')
     # send emails
     parser.update_report_data(emails)
     report = parser.prepare_report()
@@ -45,6 +50,12 @@ class Parser:
             raise ValueError(f"{self.mail_data_path.replace('uploads/', '')} must not contain empty values")
         
         self.mail_data_df = mail_data_df
+
+        departments = []
+        for department in self.mail_data_df['department']:
+            departments.append(department)
+        departments.sort()
+        self.departments = set(departments)
 
         # 2. Read mail body
         try:

@@ -145,14 +145,7 @@ def upload_file():
             return redirect(url_for('index'))
 
         department_input = request.form.get('department_search')
-        emails_dept = parser.prepare_all_emails(attach_transparent_images=False)
-
-        departments = []
-        for email in emails_dept:
-            departments.append(email['department'])
-        departments.sort()
-        departments = set(departments)
-        if department_input not in departments:
+        if department_input not in parser.departments:
             flash(f'There is no user in the given department: "{department_input}"')
             return redirect(url_for('index'))
 
