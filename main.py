@@ -3,41 +3,39 @@ This script runs the application using a development server.
 It contains the definition of routes and views for the application.
 """
 
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_login import LoginManager, login_user, login_required, logout_user
-from flask_dance.consumer import OAuth2ConsumerBlueprint
-from flask_dance.contrib.google import make_google_blueprint, google
+from flask_dance.contrib.azure import make_azure_blueprint, azure
+from flask_dance.contrib.google import make_google_blueprint, google 
 from oauthlib.oauth2.rfc6749.errors import InvalidGrantError, TokenExpiredError 
 from parser import Parser
 from image_link import Image_Count_Manager
 from login import User, LoginForm
 
 import os
+import time
+
 
 app = Flask(__name__)
 app.secret_key = "ilovecs3103"
 
-outlook_bp = OAuth2ConsumerBlueprint( 
-    "outlook", __name__, 
-    client_id="330dc871-0335-46d2-81eb-c09d3c2df450", 
-    client_secret="Kke8Q~iigu8ocq4rvRFOuApgIAR2ZOWuEyHXNbeS", 
-    token_url="https://login.microsoftonline.com/common/oauth2/v2.0/token", 
-    authorization_url="https://login.microsoftonline.com/common/oauth2/v2.0/authorize", 
-    scope=["https://graph.microsoft.com/Mail.Send", "https://graph.microsoft.com/Mail.ReadWrite"],
-    redirect_url=redirect(url_for('index'))
-    redirect_to="login_outlook" 
-) 
+# Please register an app in Microsoft Azure and generate client secret to obtain client_id and client_secret
+# Additionally, please ensure that you have given the app the necessary API permissions
+azure_bp = make_azure_blueprint(
+    client_id="", 
+    client_secret="",
+    redirect_to="login_outlook",
+    scope=["https://graph.microsoft.com/Mail.Send", "https://graph.microsoft.com/Mail.ReadWrite","https://graph.microsoft.com/User.Read"])
 
-'''google_bp = make_google_blueprint(
+google_bp = make_google_blueprint(
     client_id="",
     client_secret="",
     scope=["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/gmail.send"],
     redirect_to="login_google"
 )
-app.register_blueprint(google_bp, url_prefix="/login")'''
 
-app.register_blueprint(outlook_bp, url_prefix="/login") 
-outlook = outlook_bp.session
+app.register_blueprint(google_bp, url_prefix="/login")
+app.register_blueprint(azure_bp, url_prefix="/login") 
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -56,10 +54,13 @@ image_count_manager = Image_Count_Manager()
 # Ensure the upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+
 @app.route('/')
 def index():
     if not user.is_authenticated:
         return redirect(url_for('login'))
+    
+
     return render_template('index.html')
 
 @login_manager.user_loader
@@ -78,10 +79,9 @@ def logout():
 def login():
     form = LoginForm(request.form)
     if request.method == 'POST' and form.validate():
-
-        #user.login_smtp(form.email.data, form.password.data)
-        #login_user(user)
-        #next = request.args.get('next')
+        user.login_smtp(form.email.data, form.password.data)
+        login_user(user)
+        next = request.args.get('next')
         # !TO VALIDATE IN PRODUCTION APP!
         # if not url_has_allowed_host_and_scheme(next, request.host):
         #     return flask.abort(400)
@@ -102,10 +102,22 @@ def login_google():
 
 @app.route('/login_outlook', methods =["GET"])
 def login_outlook():
-    print(outlook.authorized)
-    if not outlook.authorized:
-        return redirect(url_for("outlook.login"))
-    return render_template("index.html")
+    if not azure.authorized:
+        return redirect(url_for("azure.login"))
+    
+    graph_url = "https://graph.microsoft.com/v1.0/me"
+    try:
+        resp = azure.get(graph_url)
+        if not resp.ok:
+            return redirect(url_for("azure.login"))
+
+        email = resp.json()['id']
+    except (InvalidGrantError, TokenExpiredError):
+        return redirect(url_for("azure.login"))
+    
+    user.login_outlook(email, azure.access_token)
+    return redirect(url_for('index'))
+
 
 #goes to the upload.html website
 #csv_file and body_file comes from index.html website
@@ -143,7 +155,10 @@ def upload_file():
                     recipient = email['email']
                     subject = email['subject']
                     body = email['body']
+                    print(recipient)
                     user.send_message(recipient, subject, body)
+                    print("email sent")
+                    time.sleep(0.5)
             
             parser.update_report_data(emails)
             report = parser.prepare_report()
@@ -152,7 +167,7 @@ def upload_file():
 
             return render_template('upload.html', emails=emails, report=report)
         except Exception as e:
-            flash(f'An error occurred: {e}')
+            flash(f'An error occurred: {str(e)}')
             return redirect(url_for('index'))
 
 @app.get("/update_count")

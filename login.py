@@ -1,10 +1,14 @@
+from flask_dance.contrib.azure import azure
 from flask_dance.contrib.google import google
 from wtforms import Form, StringField, PasswordField, validators, ValidationError
 from email.message import EmailMessage
 from base64 import urlsafe_b64encode
 from smtp_connection import SMTP_Connection
 
-SMTP_SERVERS = {"yahoo.com": "smtp.mail.yahoo.com", "gmail.com": "smtp.gmail.com"}
+SMTP_SERVERS = {"yahoo.com": "smtp.mail.yahoo.com", 
+                "gmail.com": "smtp.gmail.com", 
+                "hotmail.com": "smtp-mail.outlook.com", 
+                "outlook.com": "smtp-mail.outlook.com"}
 
 def validate_email(form, field):
     email_server = field.data[field.data.rfind("@") + 1:]
@@ -19,6 +23,7 @@ class User:
     def __init__(self):
         self.email = None
         self.password = None
+        self.access_token = None
         self.oauth = None
         self.email_sender = None
         self.is_authenticated = False
@@ -47,6 +52,16 @@ class User:
         self.email = email
         self.is_authenticated = google.authorized
         self.is_active = self.is_authenticated
+    """
+    Sets up user as a logged in outlook account.
+    This function should only be called AFTER it has been authorized
+    """
+    def login_outlook(self, email, token):
+        self.oauth = "outlook"
+        self.email = email
+        self.is_authenticated = azure.authorized
+        self.is_active = self.is_authenticated
+        self.access_token = token
     
     def send_message(self, recipient, subject, body):
         msg = EmailMessage()
@@ -58,7 +73,7 @@ class User:
         if self.oauth == "google":
             self._send_google(msg)
         elif self.oauth == "outlook":
-            pass
+            self._send_outlook(msg)
         else:
             self.email_sender.send_message(msg)
 
@@ -68,4 +83,39 @@ class User:
         rsp = google.post(f"/gmail/v1/users/{self.email}/messages/send", json=create_message)
         if not rsp.ok or "labelIds" not in rsp.json() or "SENT" not in rsp.json()["labelIds"]:
             print("Failed to send.")
+    
+    def _send_outlook(self, msg):
+        create_headers = {"Authorization": f'Bearer {self.access_token}',
+                   "Content-Type": "application/json"}
+        # Tried to emulate what was done for _send_google but creating the message that way created an error
+        create_message = {
+            "subject": msg['subject'],
+            "body": {
+                "contentType": "HTML",
+                "content": msg.get_content()
+            },
+            "toRecipients": [
+                {
+                    "emailAddress": {
+                        "address":msg["To"]
+                    }
+                }
+            ]
+        }
+
+        create_rsp = azure.post("https://graph.microsoft.com/v1.0/me/messages", headers=create_headers, json=create_message)
+
+        message_id = ""
+        if (create_rsp.ok):
+            message_id = create_rsp.json()["id"]
+
+            send_headers = {"Authorization": f'Bearer {self.access_token}'}
+            # In Outlook REST API, {id} refers to the id of the message you want to send 
+            # hence why a seperate request to craft a message was made
+            send_rsp = azure.post(f"https://graph.microsoft.com/v1.0/me/messages/{message_id}/send", headers=send_headers)
+            if (not send_rsp.ok):
+                print("Failed to send message")
+            print(send_rsp)
+        else :
+            print("Failed to create message")
  
