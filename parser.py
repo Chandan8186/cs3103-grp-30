@@ -90,7 +90,7 @@ class Parser:
         body = body.replace('#name#', recipient_data['name'])
         body = body.replace('#department#', recipient_data['department'])
 
-        md5_hash = hashlib.md5((subject + body).encode()).hexdigest()
+        md5_hash = hashlib.md5((recipient_data['email'] + subject + body).encode()).hexdigest()
         return subject, body, md5_hash
 
     def _attach_transparent_images(self, emails):
