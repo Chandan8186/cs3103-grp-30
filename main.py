@@ -6,12 +6,11 @@ It contains the definition of routes and views for the application.
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_dance.contrib.google import make_google_blueprint, google
-from flask_dance.consumer import OAuth2ConsumerBlueprint
+from flask_dance.contrib.azure import make_azure_blueprint, azure
 from oauthlib.oauth2.rfc6749.errors import InvalidGrantError, TokenExpiredError 
 from parser import Parser
 from image_link import Image_Count_Manager
-from login import LoginForm, User, SMTP_User, Google_User, Outlook_User
-
+from login import LoginForm, User, SMTP_User, Google_User, Azure_User
 import os
 
 app = Flask(__name__)
@@ -25,25 +24,21 @@ google_bp = make_google_blueprint(
 )
 app.register_blueprint(google_bp, url_prefix="/login")
 
-outlook_bp = OAuth2ConsumerBlueprint(
-    "outlook", __name__,
+azure_bp = make_azure_blueprint(
     client_id="",
     client_secret="",
-    token_url="https://login.microsoftonline.com/common/oauth2/v2.0/token",
-    authorization_url="https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
     scope=["https://graph.microsoft.com/Mail.Send", "https://graph.microsoft.com/Mail.ReadWrite"],
-    redirect_to="login_outlook"
+    redirect_to="login_azure"
 )
-app.register_blueprint(outlook_bp, url_prefix="/login")
-outlook = outlook_bp.session
+app.register_blueprint(azure_bp, url_prefix="/login")
 
-sessions = {"google": google, "outlook": outlook}
+sessions = {"google": google, "azure": azure}
 
 login_manager = LoginManager()
 login_manager.init_app(app)
 
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" # Allow running on localhost without https
-os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
+os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1" # Server may give more scopes than requested 
 
 wsgi_app = app.wsgi_app
 
@@ -104,17 +99,17 @@ def login_google():
     login_user(user, remember=True)
     return redirect(url_for('index'))
 
-@app.route('/login_outlook', methods=['GET'])
-def login_outlook():
-    if not outlook.authorized:
-        return redirect(url_for("outlook.login"))
+@app.route('/login_azure', methods=['GET'])
+def login_azure():
+    if not azure.authorized:
+        return redirect(url_for("azure.login"))
     try:
-        email = outlook.get("/oauth2/v1/userinfo").json()["email"]
+        email = azure.get("/oauth2/v1/userinfo").json()["email"]
     except (InvalidGrantError, TokenExpiredError):
-        return redirect(url_for("outlook.login"))
+        return redirect(url_for("azure.login"))
     
-    user = Outlook_User(email, outlook)
-    pseudo_database[user.get_id()] = ("Outlook", email)
+    user = Azure_User(email, azure)
+    pseudo_database[user.get_id()] = ("Azure", email)
     login_user(user, remember=True)
     return redirect(url_for('index'))
 
