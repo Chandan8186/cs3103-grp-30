@@ -49,7 +49,7 @@ class Parser:
         if mail_data_df.isna().any().any():
             raise ValueError(f"{self.mail_data_path.replace('uploads/', '')} must not contain empty values")
         
-        self.mail_data_df = mail_data_df
+        self.mail_data_df = mail_data_df.drop_duplicates()
 
         departments = []
         for department in self.mail_data_df['department']:
