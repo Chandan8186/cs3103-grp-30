@@ -60,6 +60,7 @@ class Image_Count_Manager:
         self.event_loop.run_until_complete(self._create_session())
 
     def __del__(self):
+        self.session.connector.close()
         self.session.detach()
         self.event_loop.close()
 
