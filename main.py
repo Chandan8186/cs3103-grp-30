@@ -138,7 +138,12 @@ def upload_file():
         body_file.save(bodypath)
 
         #using the parser class to prepare the emails
-        parser = Parser(csvpath, bodypath)
+        try:
+            parser = Parser(csvpath, bodypath)
+        except Exception as e:
+            flash(f"{e}")
+            return redirect(url_for('index'))
+
         department_input = request.form.get('department_search')
         emails_dept = parser.prepare_all_emails(attach_transparent_images=False)
 

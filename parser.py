@@ -52,6 +52,9 @@ class Parser:
                 file_content = file.read().split('\n\n', 1)
                 if len(file_content) < 2:
                     raise ValueError(f"{self.mail_body_path.replace('uploads/', '')} must contain subject and body separated by empty line")
+                if not file_content[0]:
+                    raise ValueError("Email body must not be empty.")
+                
         except Exception as e:
             raise Exception(f"An unexpected error occurred while reading mail body txt file: {e}")
 
