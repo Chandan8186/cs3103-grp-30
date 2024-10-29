@@ -89,6 +89,11 @@ class OutlookEmailSender:
             token_path=token_path,
             token_filename='o365_token.txt'
         )
+        # Token(self.session.fetch_token(
+        #             token_url=self._oauth2_token_url,
+        #             authorization_response=authorization_url,
+        #             include_client_id=True,
+        #             verify=self.verify_ssl)
         
         # Initialize account
         self.account = Account(self.client_id,

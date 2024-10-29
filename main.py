@@ -4,17 +4,19 @@ It contains the definition of routes and views for the application.
 """
 
 from flask import Flask, render_template, request, redirect, url_for, flash
-from flask_login import LoginManager, login_user, login_required, logout_user
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_dance.contrib.google import make_google_blueprint, google
+from flask_dance.consumer import OAuth2ConsumerBlueprint
 from oauthlib.oauth2.rfc6749.errors import InvalidGrantError, TokenExpiredError 
 from parser import Parser
 from image_link import Image_Count_Manager
-from login import User, LoginForm
+from login import LoginForm, User, SMTP_User, Google_User, Outlook_User
 
 import os
 
 app = Flask(__name__)
 app.secret_key = ""
+
 google_bp = make_google_blueprint(
     client_id="",
     client_secret="",
@@ -23,9 +25,22 @@ google_bp = make_google_blueprint(
 )
 app.register_blueprint(google_bp, url_prefix="/login")
 
+outlook_bp = OAuth2ConsumerBlueprint(
+    "outlook", __name__,
+    client_id="",
+    client_secret="",
+    token_url="https://login.microsoftonline.com/common/oauth2/v2.0/token",
+    authorization_url="https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+    scope=["https://graph.microsoft.com/Mail.Send", "https://graph.microsoft.com/Mail.ReadWrite"],
+    redirect_to="login_outlook"
+)
+app.register_blueprint(outlook_bp, url_prefix="/login")
+outlook = outlook_bp.session
+
+sessions = {"google": google, "outlook": outlook}
+
 login_manager = LoginManager()
 login_manager.init_app(app)
-user = User()
 
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" # Allow running on localhost without https
 os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
@@ -37,33 +52,37 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 image_count_manager = Image_Count_Manager()
 
+pseudo_database = {}
+
 # Ensure the upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @app.route('/')
 def index():
-    if not user.is_authenticated:
+    if not current_user.is_authenticated:
         return redirect(url_for('login'))
     return render_template('index.html')
 
 @login_manager.user_loader
 def load_user(user_id):
-    return user
-    # No need to verify since login is managed on email server side
-    # return User.get(user_id)
+    # To load from database here.
+    # Note: This function will be ran with every user interaction by flask_login to ensure security.
+    return User.load(user_id, pseudo_database, sessions)
 
-@app.route('/logout')
-@login_required
+@app.route('/logout', methods=['GET'])
+#@login_required # Allowed since "Logout" button is still in login page
 def logout():
-    logout_user()
+    if current_user.is_authenticated:
+        logout_user()
     return redirect(url_for('index'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm(request.form)
     if request.method == 'POST' and form.validate():
-        user.login_smtp(form.email.data, form.password.data)
-        login_user(user)
+        user = SMTP_User(form.email.data, form.password.data)
+        pseudo_database[user.get_id()] = ("SMTP", form.email.data, form.password.data)
+        login_user(user, remember=True)
         next = request.args.get('next')
         # !TO VALIDATE IN PRODUCTION APP!
         # if not url_has_allowed_host_and_scheme(next, request.host):
@@ -80,14 +99,30 @@ def login_google():
     except (InvalidGrantError, TokenExpiredError):
         return redirect(url_for("google.login"))
     
-    user.login_google(email)
+    user = Google_User(email, google)
+    pseudo_database[user.get_id()] = ("Google", email)
+    login_user(user, remember=True)
+    return redirect(url_for('index'))
+
+@app.route('/login_outlook', methods=['GET'])
+def login_outlook():
+    if not outlook.authorized:
+        return redirect(url_for("outlook.login"))
+    try:
+        email = outlook.get("/oauth2/v1/userinfo").json()["email"]
+    except (InvalidGrantError, TokenExpiredError):
+        return redirect(url_for("outlook.login"))
+    
+    user = Outlook_User(email, outlook)
+    pseudo_database[user.get_id()] = ("Outlook", email)
+    login_user(user, remember=True)
     return redirect(url_for('index'))
 
 #goes to the upload.html website
 #csv_file and body_file comes from index.html website
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    if not user.is_authenticated:
+    if not current_user.is_authenticated:
         return redirect(url_for('login'))
     if 'csv_file' not in request.files or 'body_file' not in request.files:
         flash('Missing file(s)')
@@ -110,7 +145,7 @@ def upload_file():
         #using the parser class to prepare the emails
         department = "HR" # Can be "all"
         try:
-            parser = Parser(user, csvpath, bodypath)
+            parser = Parser(csvpath, bodypath)
             if "view-counts" in request.form:
                 emails = parser.prepare_all_emails(department, attach_transparent_images=False)
             else:
@@ -119,7 +154,7 @@ def upload_file():
                     recipient = email['email']
                     subject = email['subject']
                     body = email['body']
-                    user.send_message(recipient, subject, body)
+                    current_user.send_message(recipient, subject, body)
             
             parser.update_report_data(emails)
             report = parser.prepare_report()
