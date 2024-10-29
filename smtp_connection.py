@@ -85,10 +85,10 @@ class OutlookEmailSender:
         ]
         
         # Set up token backend
-        # self.token_backend = FileSystemTokenBackend(
-        #     token_path=token_path,
-        #     token_filename='o365_token.txt'
-        # )
+        self.token_backend = FileSystemTokenBackend(
+            token_path=token_path,
+            token_filename='o365_token.txt'
+        )
         # Token(self.session.fetch_token(
         #             token_url=self._oauth2_token_url,
         #             authorization_response=authorization_url,
@@ -97,7 +97,7 @@ class OutlookEmailSender:
         
         # Initialize account
         self.account = Account(self.client_id,
-                            #  token_backend=self.token_backend,
+                             token_backend=self.token_backend,
                              scopes=self.scopes,
                              auth_flow_type='public')
 
