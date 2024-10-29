@@ -55,11 +55,12 @@ class SMTP_User(User):
         self.email = email
         self.password = password
         self.email_sender = SMTP_Connection(SMTP_SERVERS[email_server], 587, email, password)
-        self.email_sender.connect()
         self.is_authenticated = True
         self.is_active = True
 
     def send_message(self, recipient, subject, body):
+        if not self.email_sender.smtp:
+            self.email_sender.connect()
         self.email_sender.send_message(self._get_message(recipient, subject, body))
 
 """
@@ -84,14 +85,14 @@ class Google_User(User):
             print("Failed to send.")
 
 """
-Encapsulates a signed in Outlook account using OAuth.
+Encapsulates a signed in Azure account using OAuth.
 This function should only be called AFTER it has been authorized.
 """
-class Outlook_User(User):
+class Azure_User(User):
     def __init__(self, email, session):
         super().__init__()
         self.session = session
-        self.oauth_type = "outlook"
+        self.oauth_type = "azure"
         self.email = email
         self.is_authenticated = session.authorized
         self.is_active = self.is_authenticated
