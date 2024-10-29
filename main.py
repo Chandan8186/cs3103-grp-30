@@ -154,7 +154,6 @@ def upload_file():
         department = department_input if department_input else "all"
 
         try:
-            parser = Parser(csvpath, bodypath)
             if "view-counts" in request.form:
                 emails = parser.prepare_all_emails(department, attach_transparent_images=False)
             else:
