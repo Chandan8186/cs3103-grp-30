@@ -138,7 +138,21 @@ def upload_file():
         body_file.save(bodypath)
 
         #using the parser class to prepare the emails
-        department = "HR" # Can be "all"
+        parser = Parser(csvpath, bodypath)
+        department_input = request.form.get('department_search')
+        emails_dept = parser.prepare_all_emails(attach_transparent_images=False)
+
+        departments = []
+        for email in emails_dept:
+            departments.append(email['department'])
+        departments.sort()
+        departments = set(departments)
+        if department_input not in departments:
+            flash(f'There is no user in the given department: "{department_input}"')
+            return redirect(url_for('index'))
+
+        department = department_input if department_input else "all"
+
         try:
             parser = Parser(csvpath, bodypath)
             if "view-counts" in request.form:
