@@ -3,6 +3,25 @@
 {% block content %}
 <h1>Upload your input files.</h1>
 
+<h3>Mail data .csv file format:</h3>
+<table>
+    <tr>
+        <td>email</td>
+        <td>name</td>
+        <td>department</td>
+    </tr>
+    <tr>
+        <td>...</td>
+        <td>...</td>
+        <td>...</td>
+    </tr>
+</table>
+
+<h3>Mail body .txt file format:</h3>
+<h4>Line 1: subject (can be empty)</h4>
+<h4>Line 2: empty line</h4>
+<h4>Line 3: non-empty body</h4>
+
 <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
     <label for="csv_file">Upload Mail Data CSV:</label>
     <input type="file" name="csv_file" id="csv_file" required><br><br>
