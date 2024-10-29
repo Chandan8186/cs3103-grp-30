@@ -44,8 +44,8 @@ class User:
             return SMTP_User(details[1], details[2])
         elif details[0] == "Google":
             return Google_User(details[1], sessions["google"])
-        elif details[0] == "Outlook":
-            return Outlook_User(details[1], sessions["outlook"])
+        elif details[0] == "Azure":
+            return Azure_User(details[1], sessions["azure"])
 
 
 class SMTP_User(User):

@@ -104,7 +104,7 @@ def login_azure():
     if not azure.authorized:
         return redirect(url_for("azure.login"))
     try:
-        email = azure.get("/oauth2/v1/userinfo").json()["email"]
+        email = azure.get("/v1.0/me").json()["userPrincipalName"]
     except (InvalidGrantError, TokenExpiredError):
         return redirect(url_for("azure.login"))
     
