@@ -27,8 +27,8 @@ azure_bp = make_azure_blueprint(
     scope=["https://graph.microsoft.com/Mail.Send", "https://graph.microsoft.com/Mail.ReadWrite","https://graph.microsoft.com/User.Read"])
 
 google_bp = make_google_blueprint(
-    client_id="102764797165-616cql4mj3jemo2qjdaf88u3q76ql0ou.apps.googleusercontent.com",
-    client_secret="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",
+    client_id="",
+    client_secret="",
     scope=["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/gmail.send"],
     redirect_to="login_google"
 )
@@ -172,7 +172,7 @@ def upload_file():
                 image_count_manager.update_unique_id_list(hashes)
                 return render_template('upload.html', emails=emails, report=report)
             else:
-                return render_template('preview.html', department=department)
+                return render_template('preview.html', department=department, subject=parser.subject, body=parser.body)
 
         except Exception as e:
             flash(f'An error occurred: {str(e)}')

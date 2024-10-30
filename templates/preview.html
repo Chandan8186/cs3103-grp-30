@@ -1,10 +1,19 @@
 {% extends 'base.html' %}
 <!-- Input parameters: filtered department, template subject, template body -->
 {% block content %}
-<h1>PREVIEW PAGE TEST</h1><br><br>
+<h1>Preview Emails</h1>
 <!-- <input type="submit" value="Upload Files"> -->
 
-<h1>{{ department }}</h1>
+
+<h3>Department to send to: {{ "All Departments" if department == "all" else department }}</h3>
+<h3>Subject: {{ subject if subject else "(Empty Subject)" }}</h3>
+<h3>Body:</h3>
+<div class="box">
+    <div>{{ body | safe }}</div>
+</div>
+
+<h5>* Note that #name# and #department# will be replaced with the relevant recipient's name and department respectively.
+</h5>
 
 <form action="{{ url_for('preview_and_send') }}" method="post" enctype="multipart/form-data">
     <!-- Carries forward the department code from the upload page previously -->
