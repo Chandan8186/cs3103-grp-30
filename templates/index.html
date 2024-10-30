@@ -20,7 +20,7 @@
 <h3>Mail body .txt file format:</h3>
 <h4>Line 1: subject (can be empty)</h4>
 <h4>Line 2: empty line</h4>
-<h4>Line 3: non-empty body</h4>
+<h4>Line 3 onwards: non-empty body</h4>
 
 <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
     <label for="csv_file">Upload Mail Data CSV:</label>
