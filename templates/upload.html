@@ -2,7 +2,7 @@
 
 {% block content %}
 <h1>Processed Emails</h1>
-<table border="1">
+<table border="1" style="width: 100%;">
     <tr>
         <th>Email</th>
         <th>Name</th>
@@ -18,7 +18,7 @@
         <td>{{ email.department }}</td>
         <td>{{ email.subject }}</td>
         <td>
-            <div style="width: 700px; word-wrap: break-word; text-align: left;">
+            <div style="width: 80%; word-wrap: break-word; text-align: left;">
                 {{ email.body_view|safe }}
             </div>
         </td>
