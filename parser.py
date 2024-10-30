@@ -57,13 +57,16 @@ class Parser:
         departments.sort()
         self.departments = set(departments)
 
+        if "all" in self.departments:
+            raise ValueError("Mail Data CSV must not contain a department code named 'all'")
+
         # 2. Read mail body
         try:
             with open(self.mail_body_path, 'r') as file:
                 file_content = file.read().split('\n\n', 1)
                 if len(file_content) < 2:
                     raise ValueError(f"{self.mail_body_path.replace('uploads/', '')} must contain subject and body separated by empty line")
-                if not file_content[0]:
+                if not file_content[1]:
                     raise ValueError("Email body must not be empty.")
                 
         except Exception as e:
