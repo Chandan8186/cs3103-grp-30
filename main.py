@@ -153,7 +153,7 @@ def upload_file():
             return redirect(url_for('index'))
 
         department_input = request.form.get('department_search')
-        if department_input not in parser.departments:
+        if department_input and department_input not in parser.departments:
             flash(f'There is no user in the given department: "{department_input}"')
             return redirect(url_for('index'))
 
