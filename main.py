@@ -247,9 +247,13 @@ def about():
     return render_template('about.html')
 
 if __name__ == '__main__':
+    """
     HOST = os.environ.get('SERVER_HOST', 'localhost')
     try:
         PORT = int(os.environ.get('SERVER_PORT', '5000'))
     except ValueError:
-        PORT = 5555
+        PORT = 5000
     app.run(HOST, PORT, debug=True)
+    """
+    #could use the above to make sure the uri is localhost
+    app.run(debug=True)
