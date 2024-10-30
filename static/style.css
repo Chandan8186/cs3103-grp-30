@@ -16,6 +16,11 @@ nav ul {
     overflow: hidden;
 }
 
+nav li.right {
+    float: right;
+    margin-right: 20px;
+}
+
 nav li {
     float: left;
     margin-left: 20px;

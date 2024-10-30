@@ -8,7 +8,6 @@ class Parser:
     Parser class to parse, prepare and track mail data.
 
     Attributes:
-    sender (str): Sender's email ID.
     mail_data_path (str): Path to mail data CSV file.
     mail_body_path (str): Path to mail body txt file.
 
@@ -24,8 +23,7 @@ class Parser:
     report = parser.prepare_report()
     print(report)
     """
-    def __init__(self, sender, mail_data_path, mail_body_path):
-        self.sender = sender
+    def __init__(self, mail_data_path, mail_body_path):
         self.mail_data_path = mail_data_path
         self.mail_body_path = mail_body_path
         self.report = {}
@@ -92,7 +90,7 @@ class Parser:
         body = body.replace('#name#', recipient_data['name'])
         body = body.replace('#department#', recipient_data['department'])
 
-        md5_hash = hashlib.md5((subject + body).encode()).hexdigest()
+        md5_hash = hashlib.md5((recipient_data['email'] + subject + body).encode()).hexdigest()
         return subject, body, md5_hash
 
     def _attach_transparent_images(self, emails):
