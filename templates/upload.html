@@ -17,7 +17,7 @@
             <td>{{ email.name }}</td>
             <td>{{ email.department }}</td>
             <td>{{ email.subject }}</td>
-            <td>{{ email.body }}</td>
+            <td>{{ email.body_view|safe }}</td>
             <td id="count_{{ email.id }}"></td>
         </tr>
     {% endfor %}

@@ -133,6 +133,7 @@ class Parser:
             subject, body, md5_hash = self._prepare_email_content(template_subject, template_body, emails[i])
             emails[i]['subject'] = subject
             emails[i]['body'] = body
+            emails[i]['body_view'] = body
             emails[i]['hash'] = md5_hash
             emails[i]['id'] = str(i)
         

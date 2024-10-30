@@ -21,7 +21,7 @@ app.secret_key = ""
 # Please register an app in Microsoft Azure and generate client secret to obtain client_id and client_secret
 # Additionally, please ensure that you have given the app the necessary API permissions
 azure_bp = make_azure_blueprint(
-    client_id="", 
+    client_id="",
     client_secret="",
     redirect_to="login_azure",
     scope=["https://graph.microsoft.com/Mail.Send", "https://graph.microsoft.com/Mail.ReadWrite","https://graph.microsoft.com/User.Read"])
@@ -158,7 +158,7 @@ def upload_file():
                     subject = email['subject']
                     body = email['body']
                     current_user.send_message(recipient, subject, body)
-            
+
             parser.update_report_data(emails)
             report = parser.prepare_report()
             hashes = [email['hash'] for email in emails]
