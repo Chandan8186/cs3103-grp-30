@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+<!-- Input parameters: filtered department, template subject, template body -->
+{% block content %}
+<h1>PREVIEW PAGE TEST</h1><br><br>
+<!-- <input type="submit" value="Upload Files"> -->
+
+<h1>{{ department }}</h1>
+
+<form action="{{ url_for('preview_and_send') }}" method="post" enctype="multipart/form-data">
+    <!-- Carries forward the department code from the upload page previously -->
+    <input type="hidden" name="department" value="{{ department }}">
+    <h3>Are you sure you want to send the emails?</h3>
+    <button name="go-back">Return to file upload page</button>
+    <button name="confirm-send">Confirm send</button><br><br>
+</form>
+
+{% endblock %}

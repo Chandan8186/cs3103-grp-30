@@ -27,8 +27,8 @@ azure_bp = make_azure_blueprint(
     scope=["https://graph.microsoft.com/Mail.Send", "https://graph.microsoft.com/Mail.ReadWrite","https://graph.microsoft.com/User.Read"])
 
 google_bp = make_google_blueprint(
-    client_id="",
-    client_secret="",
+    client_id="102764797165-616cql4mj3jemo2qjdaf88u3q76ql0ou.apps.googleusercontent.com",
+    client_secret="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",
     scope=["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/gmail.send"],
     redirect_to="login_google"
 )
@@ -52,6 +52,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 image_count_manager = Image_Count_Manager()
 
 pseudo_database = {}
+
+parser = None
 
 # Ensure the upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -121,9 +123,9 @@ def login_azure():
     return redirect(url_for('index'))
 
 
-#goes to the upload.html website
+#goes to the preview.html website
 #csv_file and body_file comes from index.html website
-@app.route('/upload', methods=['POST'])
+@app.route('/preview', methods=['POST'])
 def upload_file():
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
@@ -147,6 +149,8 @@ def upload_file():
 
         #using the parser class to prepare the emails
         try:
+            # set the global parser variable
+            global parser
             parser = Parser(csvpath, bodypath)
         except Exception as e:
             flash(f"{e}")
@@ -162,23 +166,43 @@ def upload_file():
         try:
             if "view-counts" in request.form:
                 emails = parser.prepare_all_emails(department, attach_transparent_images=False)
+                parser.update_report_data(emails)
+                report = parser.prepare_report()
+                hashes = [email['hash'] for email in emails]
+                image_count_manager.update_unique_id_list(hashes)
+                return render_template('upload.html', emails=emails, report=report)
             else:
-                emails = parser.prepare_all_emails(department)
-                for email in emails:
-                    recipient = email['email']
-                    subject = email['subject']
-                    body = email['body']
-                    current_user.send_message(recipient, subject, body)
+                return render_template('preview.html', department=department)
 
-            parser.update_report_data(emails)
-            report = parser.prepare_report()
-            hashes = [email['hash'] for email in emails]
-            image_count_manager.update_unique_id_list(hashes)
-
-            return render_template('upload.html', emails=emails, report=report)
         except Exception as e:
             flash(f'An error occurred: {str(e)}')
             return redirect(url_for('index'))
+
+
+# asks for user confirmation then sends the emails
+@app.route('/upload', methods=['POST'])
+def preview_and_send():
+    try:
+        if "go-back" in request.form:
+            return redirect(url_for('index'))
+        
+        emails = parser.prepare_all_emails(request.form.get('department'))
+        for email in emails:
+            recipient = email['email']
+            subject = email['subject']
+            body = email['body']
+            current_user.send_message(recipient, subject, body)
+
+        parser.update_report_data(emails)
+        report = parser.prepare_report()
+        hashes = [email['hash'] for email in emails]
+        image_count_manager.update_unique_id_list(hashes)
+
+        return render_template('upload.html', emails=emails, report=report)
+    except Exception as e:
+        flash(f'An error occurred: {str(e)}')
+        return redirect(url_for('index'))
+
 
 @app.get("/update_count")
 def update_count():
