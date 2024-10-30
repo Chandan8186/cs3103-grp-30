@@ -3,7 +3,7 @@ This script runs the application using a development server.
 It contains the definition of routes and views for the application.
 """
 
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_dance.contrib.google import make_google_blueprint, google
 from flask_dance.contrib.azure import make_azure_blueprint, azure
@@ -14,9 +14,19 @@ from login import LoginForm, User, SMTP_User, Google_User, Azure_User
 import os
 import keyring
 import json
+import time
+
 
 app = Flask(__name__)
 app.secret_key = "testing"
+
+# Please register an app in Microsoft Azure and generate client secret to obtain client_id and client_secret
+# Additionally, please ensure that you have given the app the necessary API permissions
+azure_bp = make_azure_blueprint(
+    client_id="",
+    client_secret="",
+    redirect_to="login_azure",
+    scope=["https://graph.microsoft.com/Mail.Send", "https://graph.microsoft.com/Mail.ReadWrite","https://graph.microsoft.com/User.Read"])
 
 google_bp = make_google_blueprint(
     client_id="",
@@ -24,15 +34,9 @@ google_bp = make_google_blueprint(
     scope=["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/gmail.send"],
     redirect_to="login_google"
 )
-app.register_blueprint(google_bp, url_prefix="/login")
 
-azure_bp = make_azure_blueprint(
-    client_id="",
-    client_secret="",
-    scope=["https://graph.microsoft.com/Mail.Send", "https://graph.microsoft.com/Mail.ReadWrite"],
-    redirect_to="login_azure"
-)
-app.register_blueprint(azure_bp, url_prefix="/login")
+app.register_blueprint(google_bp, url_prefix="/login")
+app.register_blueprint(azure_bp, url_prefix="/login") 
 
 sessions = {"google": google, "azure": azure}
 
@@ -56,13 +60,18 @@ def retrieve_secret(key_name):
 def delete_secret(key_name):
     keyring.delete_password('SmartMailerApp', key_name)
 
+parser = None
+
 # Ensure the upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 
 @app.route('/')
 def index():
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
+    
+
     return render_template('index.html')
 
 @login_manager.user_loader
@@ -145,9 +154,10 @@ def login_azure():
     login_user(user, remember=True)
     return redirect(url_for('index'))
 
-#goes to the upload.html website
+
+#goes to the preview.html website
 #csv_file and body_file comes from index.html website
-@app.route('/upload', methods=['POST'])
+@app.route('/preview', methods=['POST'])
 def upload_file():
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
@@ -170,28 +180,62 @@ def upload_file():
         body_file.save(bodypath)
 
         #using the parser class to prepare the emails
-        department = "HR" # Can be "all"
         try:
+            # set the global parser variable
+            global parser
             parser = Parser(csvpath, bodypath)
+        except Exception as e:
+            flash(f"{e}")
+            return redirect(url_for('index'))
+
+        department_input = request.form.get('department_search')
+        if department_input != "all":
+            if department_input and department_input not in parser.departments:
+                flash(f'There is no user in the given department: "{department_input}"')
+                return redirect(url_for('index'))
+
+        department = department_input if department_input else "all"
+
+        try:
             if "view-counts" in request.form:
                 emails = parser.prepare_all_emails(department, attach_transparent_images=False)
+                parser.update_report_data(emails)
+                report = parser.prepare_report()
+                hashes = [email['hash'] for email in emails]
+                image_count_manager.update_unique_id_list(hashes)
+                return render_template('upload.html', emails=emails, report=report)
             else:
-                emails = parser.prepare_all_emails(department)
-                for email in emails:
-                    recipient = email['email']
-                    subject = email['subject']
-                    body = email['body']
-                    current_user.send_message(recipient, subject, body)
-            
-            parser.update_report_data(emails)
-            report = parser.prepare_report()
-            hashes = [email['hash'] for email in emails]
-            image_count_manager.update_unique_id_list(hashes)
+                return render_template('preview.html', department=department, subject=parser.subject, body=parser.body)
 
-            return render_template('upload.html', emails=emails, report=report)
         except Exception as e:
-            flash(f'An error occurred: {e}')
+            flash(f'An error occurred: {str(e)}')
             return redirect(url_for('index'))
+
+
+# asks for user confirmation then sends the emails
+@app.route('/upload', methods=['POST'])
+def preview_and_send():
+    try:
+        if "go-back" in request.form:
+            return redirect(url_for('index'))
+        
+        emails = parser.prepare_all_emails(request.form.get('department'))
+        for email in emails:
+            recipient = email['email']
+            subject = email['subject']
+            body = email['body']
+            current_user.send_message(recipient, subject, body)
+
+        parser.update_report_data(emails)
+        report = parser.prepare_report()
+        hashes = [email['hash'] for email in emails]
+        image_count_manager.update_unique_id_list(hashes)
+
+        return render_template('upload.html', emails=emails, report=report)
+    except Exception as e:
+        flash(f'An error occurred: {str(e)}')
+        return redirect(url_for('index'))
+
 
 @app.get("/update_count")
 def update_count():
