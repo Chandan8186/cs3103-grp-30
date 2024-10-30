@@ -45,7 +45,7 @@ class Parser:
         
         required_fields = ['email', 'name', 'department']
         if not all(col in mail_data_df.columns for col in required_fields):
-            raise ValueError(f"{self.mail_data_path.replace('uploads/', '')} must be a csv file containing 'email', 'name', and 'department' columns")
+            raise ValueError("Mail Data CSV must be a csv file containing 'email', 'name', and 'department' columns")
         if mail_data_df.isna().any().any():
             raise ValueError(f"{self.mail_data_path.replace('uploads/', '')} must not contain empty values")
         
