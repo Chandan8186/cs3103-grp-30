@@ -3,7 +3,7 @@ This script runs the application using a development server.
 It contains the definition of routes and views for the application.
 """
 
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_dance.contrib.google import make_google_blueprint, google
 from flask_dance.contrib.azure import make_azure_blueprint, azure
@@ -12,9 +12,19 @@ from parser import Parser
 from image_link import Image_Count_Manager
 from login import LoginForm, User, SMTP_User, Google_User, Azure_User
 import os
+import time
+
 
 app = Flask(__name__)
 app.secret_key = ""
+
+# Please register an app in Microsoft Azure and generate client secret to obtain client_id and client_secret
+# Additionally, please ensure that you have given the app the necessary API permissions
+azure_bp = make_azure_blueprint(
+    client_id="",
+    client_secret="",
+    redirect_to="login_azure",
+    scope=["https://graph.microsoft.com/Mail.Send", "https://graph.microsoft.com/Mail.ReadWrite","https://graph.microsoft.com/User.Read"])
 
 google_bp = make_google_blueprint(
     client_id="",
@@ -22,15 +32,9 @@ google_bp = make_google_blueprint(
     scope=["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/gmail.send"],
     redirect_to="login_google"
 )
-app.register_blueprint(google_bp, url_prefix="/login")
 
-azure_bp = make_azure_blueprint(
-    client_id="",
-    client_secret="",
-    scope=["https://graph.microsoft.com/Mail.Send", "https://graph.microsoft.com/Mail.ReadWrite"],
-    redirect_to="login_azure"
-)
-app.register_blueprint(azure_bp, url_prefix="/login")
+app.register_blueprint(google_bp, url_prefix="/login")
+app.register_blueprint(azure_bp, url_prefix="/login") 
 
 sessions = {"google": google, "azure": azure}
 
@@ -52,10 +56,13 @@ pseudo_database = {}
 # Ensure the upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+
 @app.route('/')
 def index():
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
+    
+
     return render_template('index.html')
 
 @login_manager.user_loader
@@ -113,6 +120,7 @@ def login_azure():
     login_user(user, remember=True)
     return redirect(url_for('index'))
 
+
 #goes to the upload.html website
 #csv_file and body_file comes from index.html website
 @app.route('/upload', methods=['POST'])
@@ -161,7 +169,7 @@ def upload_file():
                     subject = email['subject']
                     body = email['body']
                     current_user.send_message(recipient, subject, body)
-            
+
             parser.update_report_data(emails)
             report = parser.prepare_report()
             hashes = [email['hash'] for email in emails]
@@ -169,7 +177,7 @@ def upload_file():
 
             return render_template('upload.html', emails=emails, report=report)
         except Exception as e:
-            flash(f'An error occurred: {e}')
+            flash(f'An error occurred: {str(e)}')
             return redirect(url_for('index'))
 
 @app.get("/update_count")
