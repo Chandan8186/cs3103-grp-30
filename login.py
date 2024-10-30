@@ -4,6 +4,12 @@ from wtforms import Form, StringField, PasswordField, validators, ValidationErro
 from email.message import EmailMessage
 from base64 import urlsafe_b64encode
 from smtp_connection import SMTP_Connection
+from keyring import get_password
+import keyring
+import json
+
+def retrieve_secret(key_name):
+    return keyring.get_password('SmartMailerApp', key_name)
 
 SMTP_SERVERS = {"yahoo.com": "smtp.mail.yahoo.com", 
                 "gmail.com": "smtp.gmail.com", 
@@ -75,17 +81,29 @@ class User:
         return msg
     
     @staticmethod
-    def load(user_id, database, sessions):
-        if user_id not in database:
+    def load(user_id, sessions):
+        # Retrieve user data from keyring
+        data = retrieve_secret(user_id)
+        if not data:
             return None
-        
-        details = database[user_id]
-        if details[0] == "SMTP":
-            return SMTP_User(details[1], details[2])
-        elif details[0] == "Google":
-            return Google_User(details[1], sessions["google"])
-        elif details[0] == "Azure":
-            return Azure_User(details[1], sessions["azure"])
+
+        # Parse the JSON data
+        try:
+            user_info = json.loads(data)
+        except json.JSONDecodeError:
+            return None
+        user_type = user_info.get('user_type')
+        email = user_info.get('email')
+
+        if user_type == 'SMTP':
+            password = user_info.get('password')
+            return SMTP_User(email, password)
+        elif user_type == 'Google':
+            return Google_User(email, sessions["google"])
+        elif user_type == 'Azure':
+            return Azure_User(email, sessions["azure"])
+        else:
+            return None
 
 
 class SMTP_User(User):

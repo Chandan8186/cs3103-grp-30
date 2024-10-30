@@ -5,4 +5,5 @@ oauthlib
 wtforms
 aiohttp
 pandas
+keyring
 smtplib

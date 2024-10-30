@@ -12,11 +12,13 @@ from parser import Parser
 from image_link import Image_Count_Manager
 from login import LoginForm, User, SMTP_User, Google_User, Azure_User
 import os
+import keyring
+import json
 import time
 
 
 app = Flask(__name__)
-app.secret_key = ""
+app.secret_key = "testing"
 
 # Please register an app in Microsoft Azure and generate client secret to obtain client_id and client_secret
 # Additionally, please ensure that you have given the app the necessary API permissions
@@ -51,7 +53,12 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 image_count_manager = Image_Count_Manager()
 
-pseudo_database = {}
+def store_secret(key_name, secret_value):
+    keyring.set_password('SmartMailerApp', key_name, secret_value)
+def retrieve_secret(key_name):
+    return keyring.get_password('SmartMailerApp', key_name)
+def delete_secret(key_name):
+    keyring.delete_password('SmartMailerApp', key_name)
 
 parser = None
 
@@ -71,12 +78,14 @@ def index():
 def load_user(user_id):
     # To load from database here.
     # Note: This function will be ran with every user interaction by flask_login to ensure security.
-    return User.load(user_id, pseudo_database, sessions)
+    return User.load(user_id, sessions)
 
 @app.route('/logout', methods=['GET'])
 #@login_required # Allowed since "Logout" button is still in login page
 def logout():
     if current_user.is_authenticated:
+        user_id = current_user.get_id()
+        delete_secret(user_id)
         logout_user()
     return redirect(url_for('index'))
 
@@ -84,8 +93,17 @@ def logout():
 def login():
     form = LoginForm(request.form)
     if request.method == 'POST' and form.validate():
-        user = SMTP_User(form.email.data, form.password.data)
-        pseudo_database[user.get_id()] = ("SMTP", form.email.data, form.password.data)
+        email = form.email.data
+        password = form.password.data
+        user = SMTP_User(email, password)
+        user_id = user.get_id()
+        user_data = {
+            'user_type': 'SMTP',
+            'email': email,
+            'password': password
+        }
+        user_data_json = json.dumps(user_data)
+        store_secret(user_id, user_data_json)
         login_user(user, remember=True)
         next = request.args.get('next')
         # !TO VALIDATE IN PRODUCTION APP!
@@ -104,7 +122,14 @@ def login_google():
         return redirect(url_for("google.login"))
     
     user = Google_User(email, google)
-    pseudo_database[user.get_id()] = ("Google", email)
+    user_data = {
+        'user_type': 'Google',
+        'email': email
+    }
+    user_id = user.get_id()
+    user_data_json = json.dumps(user_data)
+    store_secret(user_id, user_data_json)
+
     login_user(user, remember=True)
     return redirect(url_for('index'))
 
@@ -118,7 +143,14 @@ def login_azure():
         return redirect(url_for("azure.login"))
     
     user = Azure_User(email, azure)
-    pseudo_database[user.get_id()] = ("Azure", email)
+    user_data = {
+        'user_type': 'Azure',
+        'email': email
+    }
+    user_id = user.get_id()
+    user_data_json = json.dumps(user_data)
+    store_secret(user_id, user_data_json)
+
     login_user(user, remember=True)
     return redirect(url_for('index'))
 
@@ -218,9 +250,10 @@ if __name__ == '__main__':
     """
     HOST = os.environ.get('SERVER_HOST', 'localhost')
     try:
-        PORT = int(os.environ.get('SERVER_PORT', '5555'))
+        PORT = int(os.environ.get('SERVER_PORT', '5000'))
     except ValueError:
-        PORT = 5555
-    app.run(HOST, PORT)
+        PORT = 5000
+    app.run(HOST, PORT, debug=True)
     """
+    #could use the above to make sure the uri is localhost
     app.run(debug=True)
