@@ -3,13 +3,37 @@
 {% block content %}
 <h1>Upload your input files.</h1>
 
+<h3>Mail data .csv file format:</h3>
+<table>
+    <tr>
+        <td>email</td>
+        <td>name</td>
+        <td>department</td>
+    </tr>
+    <tr>
+        <td>...</td>
+        <td>...</td>
+        <td>...</td>
+    </tr>
+</table>
+
+<h3>Mail body .txt file format:</h3>
+<h4>Line 1: subject (can be empty)</h4>
+<h4>Line 2: empty line</h4>
+<h4>Line 3 onwards: non-empty body (in HTML format)</h4>
+
 <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
     <label for="csv_file">Upload Mail Data CSV:</label>
     <input type="file" name="csv_file" id="csv_file" required><br><br>
-    
+
     <label for="body_file">Upload Mail Body Text File:</label>
     <input type="file" name="body_file" id="body_file" required><br><br>
-    <button name="send-emails">Send emails</button><br><br>
-    <button name="view-counts">Check sent email view counts</button>
+
+    <label for="department_search">Enter department code (type "all" or leave empty to send to all departments):</label>
+    <input type="text" name="department_search" id="department_search" placeholder=""><br><br>
+
+    <!-- <input type="submit" value="Upload Files"> -->
+    <button name="preview-emails">Preview before sending</button><br><br>
+    <button name="view-counts">Check sent email view counts</button><br><br>
 </form>
 {% endblock %}

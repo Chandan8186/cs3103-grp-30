@@ -26,15 +26,15 @@ nav li {
     margin-left: 20px;
 }
 
-    nav li a {
-        color: white;
-        text-decoration: none;
-        font-weight: bold;
-    }
+nav li a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
 
-        nav li a:hover {
-            text-decoration: underline;
-        }
+nav li a:hover {
+    text-decoration: underline;
+}
 
 .container {
     padding: 20px;
@@ -55,4 +55,29 @@ footer {
     background-color: #ddd;
     padding: 10px;
     text-align: center;
+}
+
+
+table {
+    border-collapse: collapse;
+    width: 20%;
+}
+
+th,
+td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: center;
+}
+
+.box {
+    background-color: white;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    white-space: normal;
 }

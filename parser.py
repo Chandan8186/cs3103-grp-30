@@ -10,14 +10,19 @@ class Parser:
     Attributes:
     mail_data_path (str): Path to mail data CSV file.
     mail_body_path (str): Path to mail body txt file.
+    report (dict): Dictionary storing number of emails sent to each department.
+    mail_data_df (pd.df): Dataframe containing mail data.
+    departments (set): Set of all unique departments.
+    subject (str): Mail subject template.
+    body (str): Mail body template.
 
     Mail data csv headers: email, name, department
 
     Mail body text file format: subject, followed by empty line, followed by body
 
     Sample usage:
-    parser = Parser('myself@gmail.com', 'data.csv', 'body.txt')
-    emails = parser.prepare_all_emails_MIMEMultipart('department-A5')
+    parser = Parser('data.csv', 'body.txt')
+    emails = parser.prepare_all_emails('department-A5')
     # send emails
     parser.update_report_data(emails)
     report = parser.prepare_report()
@@ -28,21 +33,49 @@ class Parser:
         self.mail_body_path = mail_body_path
         self.report = {}
 
-    def _read_mail_data(self):
-        """
-        Reads mail data CSV file.
-
-        Returns: pd.df: DataFrame containing emails, names and departments.
-        """
-        df = pd.read_csv(self.mail_data_path, dtype=str)
+        # 1. Read mail data
+        try:
+            mail_data_df = pd.read_csv(self.mail_data_path, dtype=str)
+        except pd.errors.EmptyDataError:
+            raise Exception(f"{self.mail_data_path.replace('uploads/', '')} must not be empty.")
+        except pd.errors.ParserError as e:
+            raise Exception(f"Parsing error: {e}. Please fix {self.mail_data_path.replace('uploads/', '')} acordingly.")
+        except Exception as e:
+            raise Exception(f"An unexpected error occurred while reading mail data csv file: {e}")
+        
         required_fields = ['email', 'name', 'department']
-        if not all(col in df.columns for col in required_fields):
-            raise ValueError(f"{self.mail_data_path} must contain 'email', 'name', and 'department' columns")
-        if df.isna().any().any():
-            raise ValueError(f"{self.mail_data_path} must not contain empty values")
-        return df
+        if not all(col in mail_data_df.columns for col in required_fields):
+            raise ValueError("Mail Data CSV must be a csv file containing 'email', 'name', and 'department' columns")
+        if mail_data_df.isna().any().any():
+            raise ValueError(f"{self.mail_data_path.replace('uploads/', '')} must not contain empty values")
+        
+        self.mail_data_df = mail_data_df.drop_duplicates()
+
+        departments = []
+        for department in self.mail_data_df['department']:
+            departments.append(department)
+        departments.sort()
+        self.departments = set(departments)
+
+        if "all" in self.departments:
+            raise ValueError("Mail Data CSV must not contain a department code named 'all'")
+
+        # 2. Read mail body
+        try:
+            with open(self.mail_body_path, 'r') as file:
+                file_content = file.read().split('\n\n', 1)
+                if len(file_content) < 2:
+                    raise ValueError(f"{self.mail_body_path.replace('uploads/', '')} must contain subject and body separated by empty line")
+                if not file_content[1]:
+                    raise ValueError("Email body must not be empty.")
+                
+        except Exception as e:
+            raise Exception(f"An unexpected error occurred while reading mail body txt file: {e}")
+
+        self.subject = file_content[0]
+        self.body = file_content[1]
     
-    def _filter_by_department(self, mail_data_df, department='all'):
+    def _filter_by_department(self, department='all'):
         """
         Filters mail_data df by given department.
         
@@ -54,23 +87,10 @@ class Parser:
         pd.df: Filtered dataframe containing recipients from given department.
         """
         if department.lower() == 'all':
-            return mail_data_df
-        return mail_data_df[mail_data_df['department'] == department]
+            return self.mail_data_df
+        return self.mail_data_df[self.mail_data_df['department'] == department]
 
-    def _read_mail_body(self):
-        """
-        Reads email body file.
-
-        Returns:
-        str, str: Subject, body of email template.
-        """
-        with open(self.mail_body_path, 'r') as file:
-            file_content = file.read().split('\n\n', 1)
-            if len(file_content) < 2:
-                raise ValueError(f"{self.mail_body_path} must contain subject and body separated by empty line")
-            return file_content[0], file_content[1]
-
-    def _prepare_email_content(self, template_subject, template_body, recipient_data):
+    def _prepare_email_content(self, recipient_data):
         """
         Prepares email subject and body for given recipient.
         
@@ -82,11 +102,11 @@ class Parser:
         Returns:
         str, str: Subject and body of email template.
         """
-        subject = template_subject
+        subject = self.subject
         subject = subject.replace('#name#', recipient_data['name'])
         subject = subject.replace('#department#', recipient_data['department'])
 
-        body = template_body
+        body = self.body
         body = body.replace('#name#', recipient_data['name'])
         body = body.replace('#department#', recipient_data['department'])
 
@@ -110,34 +130,20 @@ class Parser:
         Returns:
         list of dicts, each dict with email, name, department, subject and body
         """
-        # 1. Read email IDs, names and department codes
-        try:
-            mail_data_df = self._read_mail_data()
-        except Exception as e:
-            print(f"Error reading CSV file: {e}")
-            return None
-
-        # 2. Filter by department code
-        filtered_mail_data_df = self._filter_by_department(mail_data_df, department)
+        # 1. Filter by department code
+        filtered_mail_data_df = self._filter_by_department(department)
         emails = filtered_mail_data_df.to_dict(orient='records')
 
-        # 3. Read template subject and body
-        try:
-            template_subject, template_body = self._read_mail_body()
-        except Exception as e:
-            print(f"Error reading template file: {e}")
-            return None
-    
-        # 4. Prepare all emails
+        # 2. Prepare all emails
         for i in range(len(emails)):
-            subject, body, md5_hash = self._prepare_email_content(template_subject, template_body, emails[i])
+            subject, body, md5_hash = self._prepare_email_content(emails[i])
             emails[i]['subject'] = subject
             emails[i]['body'] = body
             emails[i]['body_view'] = body
             emails[i]['hash'] = md5_hash
             emails[i]['id'] = str(i)
         
-        # 5. Attach 1x1 transparent images
+        # 3. Attach 1x1 transparent images
         if attach_transparent_images:
             self._attach_transparent_images(emails)
 
