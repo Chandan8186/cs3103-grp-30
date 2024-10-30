@@ -3,7 +3,11 @@ from email.message import EmailMessage
 from base64 import urlsafe_b64encode
 from smtp_connection import SMTP_Connection
 from keyring import get_password
+import keyring
 import json
+
+def retrieve_secret(key_name):
+    return keyring.get_password('SmartMailerApp', key_name)
 
 SMTP_SERVERS = {"yahoo.com": "smtp.mail.yahoo.com", "gmail.com": "smtp.gmail.com"}
 
@@ -37,7 +41,7 @@ class User:
         return msg
     
     @staticmethod
-    def load(user_id, database, sessions):
+    def load(user_id, sessions):
         # Retrieve user data from keyring
         data = retrieve_secret(user_id)
         if not data:

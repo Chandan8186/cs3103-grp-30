@@ -117,6 +117,7 @@ def login_google():
         'user_type': 'Google',
         'email': email
     }
+    user_id = user.get_id()
     user_data_json = json.dumps(user_data)
     store_secret(user_id, user_data_json)
 
@@ -137,6 +138,7 @@ def login_azure():
         'user_type': 'Azure',
         'email': email
     }
+    user_id = user.get_id()
     user_data_json = json.dumps(user_data)
     store_secret(user_id, user_data_json)
 
