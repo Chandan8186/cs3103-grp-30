@@ -123,6 +123,13 @@ class Azure_User(User):
         self.is_active = self.is_authenticated
         self.access_token = access_token
     
+    """
+    Crafts an email and sends that email to target recipient
+    Parameters:
+        recipient (str): receiver of email to be crafted
+        subject (str): subject of email to be crafted
+        body (str): body content of email to be crafted
+    """
     def send_message(self, recipient, subject, body):
         msg = self._get_message(recipient, subject, body)
         encoded_message = urlsafe_b64encode(msg.as_bytes()).decode()
