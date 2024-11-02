@@ -12,42 +12,40 @@
         <th>View Count</th>
     </tr>
     {% for email in emails %}
-    <tr>
-        <td>{{ email.email }}</td>
-        <td>{{ email.name }}</td>
-        <td>{{ email.department }}</td>
-        <td>{{ email.subject }}</td>
-        <td>
-            <div style="width: 80%; word-wrap: break-word; text-align: left;">
-                {{ email.body_view|safe }}
-            </div>
-        </td>
-        <td id=" count_{{ email.id }}">
-        </td>
-    </tr>
+        <tr>
+            <td>{{ email.email }}</td>
+            <td>{{ email.name }}</td>
+            <td>{{ email.department }}</td>
+            <td>{{ email.subject }}</td>
+            <td>
+                <div style="width: 80%; word-wrap: break-word; text-align: left;">
+                    {{ email.body_view|safe }}
+                </div>
+            </td>
+            <td id="count_{{ email.id }}"></td>
+        </tr>
     {% endfor %}
 </table>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"
-    integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 <script>
-    function update() {
-        $.get("/update_count", function (data) {
+    function update(){
+        $.get("/update_count", function(data){
             for (let i = 0; i < data.length; i++) {
                 $("#count_" + i.toString()).text(data[i])
             }
         });
     }
     update()
-    var intervalId = setInterval(function () {
+    var intervalId = setInterval(function() {
         update()
     }, 15000); // Updates every 15s
 </script>
 
 <h2>Report</h2>
 {% if report %}
-<pre>{{ report }}</pre>
+    <pre>{{ report }}</pre>
 {% else %}
-<p>No report available.</p>
+    <p>No report available.</p>
 {% endif %}
 <a href="{{ url_for('index') }}">Back to Home</a>
 {% endblock %}
