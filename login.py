@@ -157,9 +157,16 @@ class Azure_User(User):
     
     
     def send_message(self, recipient, subject, body):
+        """
+        Crafts an email and sends that email to target recipient
+
+        Parameters:
+            recipient (str): receiver of email to be crafted
+            subject (str): subject of email to be crafted
+            body (str): body content of email to be crafted
+        """
         create_headers = {"Authorization": f'Bearer {self.access_token}',
                    "Content-Type": "application/json"}
-        # Tried to emulate what was done for _send_google but creating the message that way created an error
         create_message = {
             "subject": subject,
             "body": {
@@ -175,6 +182,7 @@ class Azure_User(User):
             ]
         }
 
+        # Craft an email draft first
         create_rsp = azure.post("https://graph.microsoft.com/v1.0/me/messages", headers=create_headers, json=create_message)
 
         message_id = ""
@@ -182,12 +190,11 @@ class Azure_User(User):
             message_id = create_rsp.json()["id"]
 
             send_headers = {"Authorization": f'Bearer {self.access_token}'}
-            # In Outlook REST API, {id} refers to the id of the message you want to send 
-            # hence why a seperate request to craft a message was made
+
+            # Send the email draft to target recipient
             send_rsp = azure.post(f"https://graph.microsoft.com/v1.0/me/messages/{message_id}/send", headers=send_headers)
             if (not send_rsp.ok):
                 print("Failed to send message")
-            print(send_rsp)
         else :
             print("Failed to create message")
  
