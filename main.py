@@ -33,7 +33,7 @@ azure_bp = make_azure_blueprint(
     client_id="",
     client_secret="",
     redirect_to="login_azure",
-    scope=["https://graph.microsoft.com/Mail.Send", "https://graph.microsoft.com/Mail.ReadWrite", "https://graph.microsoft.com/User.Read"]
+    scope=["https://graph.microsoft.com/User.Read", "https://graph.microsoft.com/Mail.Send"]
 )
 
 app.register_blueprint(google_bp, url_prefix="/login")
@@ -114,8 +114,7 @@ def login_google():
         return redirect(url_for("google.login"))
     
     user = Google_User(email)
-    user_data_json = json.dumps({})
-    store_secret(user.get_id(), user_data_json)
+    store_secret(user.get_id(), json.dumps({}))
 
     login_user(user, remember=True)
     return redirect(url_for('index'))

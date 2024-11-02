@@ -72,7 +72,7 @@ class User:
         elif email_type == 'azure':
             return Azure_User(email)
         return None
-
+from urllib import request
 
 class SMTP_User(User):
     def __init__(self, email, password):
@@ -105,8 +105,8 @@ class Google_User(User):
     def send_message(self, recipient, subject, body):
         msg = self._get_message(recipient, subject, body)
         encoded_message = urlsafe_b64encode(msg.as_bytes()).decode()
-        create_message = {"raw": encoded_message}
-        rsp = google.post(f"/gmail/v1/users/{self.email}/messages/send", json=create_message)
+        json_message = {"raw": encoded_message}
+        rsp = google.post(f"/gmail/v1/users/{self.email}/messages/send", json=json_message)
         if not rsp.ok or "labelIds" not in rsp.json() or "SENT" not in rsp.json()["labelIds"]:
             print("Failed to send.")
 
@@ -124,37 +124,12 @@ class Azure_User(User):
         self.access_token = access_token
     
     def send_message(self, recipient, subject, body):
-        create_headers = {"Authorization": f'Bearer {self.access_token}',
-                          "Content-Type": "application/json"}
-        # Tried to emulate what was done for _send_google but creating the message that way created an error
-        create_message = {
-            "subject": subject,
-            "body": {
-                "contentType": "HTML",
-                "content": body
-            },
-            "toRecipients": [
-                {
-                    "emailAddress": {
-                        "address":recipient
-                    }
-                }
-            ]
-        }
+        msg = self._get_message(recipient, subject, body)
+        encoded_message = urlsafe_b64encode(msg.as_bytes()).decode()
+        headers = {"Authorization": f'Bearer {self.access_token}', "Content-Type": "text/plain"}
+        rsp = azure.post("/v1.0/me/sendMail", data=encoded_message, headers=headers)
+        if (not rsp.ok):
+            print("Failed to send message")
+        print(rsp)
 
-        create_rsp = azure.post("https://graph.microsoft.com/v1.0/me/messages", headers=create_headers, json=create_message)
-
-        message_id = ""
-        if (create_rsp.ok):
-            message_id = create_rsp.json()["id"]
-
-            send_headers = {"Authorization": f'Bearer {self.access_token}'}
-            # In Outlook REST API, {id} refers to the id of the message you want to send 
-            # hence why a seperate request to craft a message was made
-            send_rsp = azure.post(f"https://graph.microsoft.com/v1.0/me/messages/{message_id}/send", headers=send_headers)
-            if (not send_rsp.ok):
-                print("Failed to send message")
-            print(send_rsp)
-        else :
-            print("Failed to create message")
  
