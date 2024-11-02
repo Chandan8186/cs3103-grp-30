@@ -14,7 +14,6 @@ from login import LoginForm, User, SMTP_User, Google_User, Azure_User
 import os
 import keyring
 import json
-import time
 
 app = Flask(__name__)
 app.secret_key = "testing"

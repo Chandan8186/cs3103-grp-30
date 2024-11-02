@@ -72,6 +72,8 @@ class Image_Count_Manager:
         self.unique_id_list = unique_id_list
 
     async def _get_image_count(self, unique_id) -> int:
+        if unique_id == None:
+            return ""
         params = {"type": "json",
                 # Ensures the input is a string, as there is no type checking for unique_id
                 "id": str(unique_id)}
@@ -112,4 +114,9 @@ class Image_Count_Manager:
     Asynchronously gets image download count for each unique id in self.unique_id_list.
     """
     def get_image_counts(self) -> list[str]:
-        return self.event_loop.run_until_complete(self._get_image_counts())
+        image_counts = self.event_loop.run_until_complete(self._get_image_counts())
+        # Remove invalid ids to prevent unnecessary server spam
+        for i in range(len(image_counts)):
+            if image_counts[i] == "":
+                self.unique_id_list[i] = None
+        return image_counts
