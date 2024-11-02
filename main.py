@@ -16,29 +16,28 @@ import keyring
 import json
 import time
 
-
 app = Flask(__name__)
 app.secret_key = "testing"
 
-# Please register an app in Microsoft Azure and generate client secret to obtain client_id and client_secret
-# Additionally, please ensure that you have given the app the necessary API permissions
+# Please register an OAuth app at Google Cloud / Microsoft Azure to generate client_id and client_secret
+# Additionally, please ensure that you have given the app the necessary API permissions such as scopes,
+# redirect uri, permitted emails if testing, etc. Note that Azure does only allows localhost for http,
+# and NOT 127.0.0.1.
+google_bp = make_google_blueprint(
+    client_id="",
+    client_secret="",
+    redirect_to="login_google",
+    scope=["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/gmail.send"]
+)
 azure_bp = make_azure_blueprint(
     client_id="",
     client_secret="",
     redirect_to="login_azure",
-    scope=["https://graph.microsoft.com/Mail.Send", "https://graph.microsoft.com/Mail.ReadWrite","https://graph.microsoft.com/User.Read"])
-
-google_bp = make_google_blueprint(
-    client_id="",
-    client_secret="",
-    scope=["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/gmail.send"],
-    redirect_to="login_google"
+    scope=["https://graph.microsoft.com/Mail.Send", "https://graph.microsoft.com/Mail.ReadWrite", "https://graph.microsoft.com/User.Read"]
 )
 
 app.register_blueprint(google_bp, url_prefix="/login")
 app.register_blueprint(azure_bp, url_prefix="/login") 
-
-sessions = {"google": google, "azure": azure}
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -70,15 +69,13 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def index():
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
-    
-
     return render_template('index.html')
 
 @login_manager.user_loader
 def load_user(user_id):
     # To load from database here.
     # Note: This function will be ran with every user interaction by flask_login to ensure security.
-    return User.load(user_id, sessions)
+    return User.load(user_id)
 
 @app.route('/logout', methods=['GET'])
 #@login_required # Allowed since "Logout" button is still in login page
@@ -96,15 +93,10 @@ def login():
         email = form.email.data
         password = form.password.data
         user = SMTP_User(email, password)
-        user_id = user.get_id()
-        user_data = {
-            'user_type': 'SMTP',
-            'email': email,
-            'password': password
-        }
-        user_data_json = json.dumps(user_data)
-        store_secret(user_id, user_data_json)
+        user_data_json = json.dumps({'password': password})
+        store_secret(user.get_id(), user_data_json)
         login_user(user, remember=True)
+
         next = request.args.get('next')
         # !TO VALIDATE IN PRODUCTION APP!
         # if not url_has_allowed_host_and_scheme(next, request.host):
@@ -121,14 +113,9 @@ def login_google():
     except (InvalidGrantError, TokenExpiredError):
         return redirect(url_for("google.login"))
     
-    user = Google_User(email, google)
-    user_data = {
-        'user_type': 'Google',
-        'email': email
-    }
-    user_id = user.get_id()
-    user_data_json = json.dumps(user_data)
-    store_secret(user_id, user_data_json)
+    user = Google_User(email)
+    user_data_json = json.dumps({})
+    store_secret(user.get_id(), user_data_json)
 
     login_user(user, remember=True)
     return redirect(url_for('index'))
@@ -143,13 +130,7 @@ def login_azure():
         return redirect(url_for("azure.login"))
     
     user = Azure_User(email, azure)
-    user_data = {
-        'user_type': 'Azure',
-        'email': email
-    }
-    user_id = user.get_id()
-    user_data_json = json.dumps(user_data)
-    store_secret(user_id, user_data_json)
+    store_secret(user.get_id(), json.dumps({}))
 
     login_user(user, remember=True)
     return redirect(url_for('index'))
@@ -164,8 +145,10 @@ def upload_file():
     if 'csv_file' not in request.files or 'body_file' not in request.files:
         flash('Missing file(s)')
         return redirect(url_for('index'))
+    
     csv_file = request.files['csv_file']
     body_file = request.files['body_file']
+
     if csv_file.filename == '' or body_file.filename == '':
         flash('No selected file(s)')
         return redirect(url_for('index'))
@@ -189,10 +172,9 @@ def upload_file():
             return redirect(url_for('index'))
 
         department_input = request.form.get('department_search')
-        if department_input != "all":
-            if department_input and department_input not in parser.departments:
-                flash(f'There is no user in the given department: "{department_input}"')
-                return redirect(url_for('index'))
+        if department_input and department_input != "all" and department_input not in parser.departments:
+            flash(f'There is no user in the given department: "{department_input}"')
+            return redirect(url_for('index'))
 
         department = department_input if department_input else "all"
 
