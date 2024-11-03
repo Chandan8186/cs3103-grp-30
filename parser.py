@@ -51,28 +51,36 @@ class Parser:
         except Exception as e:
             raise Exception(f"An unexpected error occurred while reading mail data csv file: {e}")
         
+        # 1.1. Check for required columns
         required_fields = ['email', 'name', 'department']
         if not all(col in mail_data_df.columns for col in required_fields):
             raise ValueError("Mail Data CSV must be a csv file containing 'email', 'name', and 'department' columns")
         if mail_data_df[required_fields].isna().any().any():
-            raise ValueError(f"{self.mail_data_path.replace('uploads/', '')} must not contain empty values")
+            raise ValueError("email, name, department columns must not contain empty values")
         
-        if 'name_placeholder' in mail_data_df:
+        # 1.2. Check for optional name_placeholder
+        if 'name_placeholder' in mail_data_df and (not pd.isna(mail_data_df['name_placeholder'].iloc[0])):
             if '<' in mail_data_df['name_placeholder'][0] or '>' in mail_data_df['name_placeholder'][0]:
                 raise ValueError("Name and department placeholders must not contain '<' or '>'")
             self.name_placeholder = mail_data_df['name_placeholder'][0]
-        else:
+        elif 'name_placeholder' not in mail_data_df:
             self.name_placeholder = '#name#'
+        else:
+            raise ValueError("If name_placeholder or department_placeholder columns are included, their first row must contain the relevant placeholder")
 
-        if 'department_placeholder' in mail_data_df:
+        # 1.3. Check for optional department_placeholder
+        if 'department_placeholder' in mail_data_df and (not pd.isna(mail_data_df['department_placeholder'].iloc[0])):
             if '<' in mail_data_df['department_placeholder'][0] or '>' in mail_data_df['department_placeholder'][0]:
                 raise ValueError("Name and department placeholders must not contain '<' or '>'")
             self.department_placeholder = mail_data_df['department_placeholder'][0]
-        else:
+        elif 'department_placeholder' not in mail_data_df:
             self.department_placeholder = '#department#'
+        else:
+            raise ValueError("If name_placeholder or department_placeholder columns are included, their first row must contain the relevant placeholder")
         
         self.mail_data_df = mail_data_df.drop_duplicates()
 
+        # 1.4. Collate all departments
         departments = []
         for department in self.mail_data_df['department']:
             departments.append(department)
@@ -82,6 +90,7 @@ class Parser:
         if "all" in self.departments:
             raise ValueError("Mail Data CSV must not contain a department code named 'all'")
 
+        # 1.5. Check for email address validity
         for email in self.mail_data_df['email']:
             if re.match(EMAIL_REGEX, email) is None:
                 raise ValueError(f"At least one email address: '{email}' does not follow the RFC 5322 and 1034 format")
