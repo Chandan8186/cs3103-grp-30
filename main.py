@@ -29,6 +29,7 @@ google_bp = make_google_blueprint(
     client_id="",
     client_secret="",
     redirect_to="login_google",
+    offline=True,
     scope=["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/gmail.send"]
 )
 azure_bp = make_azure_blueprint(
@@ -233,11 +234,7 @@ def preview_and_send():
             subject = email['subject']
             body = email['body']
 
-            try:
-                current_user.send_message(recipient, subject, body)
-            except TokenExpiredError:
-                return render_template("login.html")
-
+            current_user.send_message(recipient, subject, body)
             email_sent_count += 1
 
         parser.update_report_data(emails)

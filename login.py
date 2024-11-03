@@ -34,9 +34,9 @@ A form used to obtain SMTP email and password from the user.
 class LoginForm(Form):
     class Meta:
         csrf = True
-        csrf_class = SessionCSRF # Uses session-based  
+        csrf_class = SessionCSRF # Uses session-based Cross-Site Request Forgery for secure transfer of details.
         csrf_secret = b"testing123"
-        csrf_time_limit = timedelta(minutes=20)
+        csrf_time_limit = timedelta(minutes=20) # Set to renew to ensure security
 
         @property
         def csrf_context(self):
@@ -172,7 +172,6 @@ class Azure_User(User):
         self.email = email
         self.is_authenticated = azure.authorized
         self.is_active = self.is_authenticated
-        self.access_token = azure.access_token
     
     """
     Crafts an email and sends that email to target recipient
@@ -184,7 +183,7 @@ class Azure_User(User):
     def send_message(self, recipient, subject, body):
         msg = self._get_message(recipient, subject, body)
         encoded_message = b64encode(msg.as_bytes()).decode()
-        headers = {"Authorization": f'Bearer {self.access_token}', "Content-Type": "text/plain"}
+        headers = {"Authorization": f'Bearer {azure.access_token}', "Content-Type": "text/plain"}
         rsp = azure.post("/v1.0/me/sendMail", data=encoded_message, headers=headers)
         if (not rsp.ok):
             flash(f"Failed to send email to {recipient} due to :{rsp.reason}.")
