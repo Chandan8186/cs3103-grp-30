@@ -3,7 +3,7 @@ This script runs the application using a development server.
 It contains the definition of routes and views for the application.
 """
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_dance.contrib.google import make_google_blueprint, google
 from flask_dance.contrib.azure import make_azure_blueprint, azure
@@ -72,12 +72,11 @@ def index():
 
 @login_manager.user_loader
 def load_user(user_id):
-    # To load from database here.
-    # Note: This function will be ran with every user interaction by flask_login to ensure security.
+    # Note: This function will be ran with every page refresh by flask_login to ensure security.
     return User.load(user_id)
 
 @app.route('/logout', methods=['GET'])
-#@login_required # Allowed since "Logout" button is still in login page
+@login_required
 def logout():
     if current_user.is_authenticated:
         user_id = current_user.get_id()
@@ -87,6 +86,9 @@ def logout():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
     form = LoginForm(request.form)
     if request.method == 'POST' and form.validate():
         email = form.email.data
@@ -105,6 +107,8 @@ def login():
 
 @app.route('/login_google', methods=['GET'])
 def login_google():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
     if not google.authorized:
         return redirect(url_for("google.login"))
     try:
@@ -120,6 +124,8 @@ def login_google():
 
 @app.route('/login_azure', methods=['GET'])
 def login_azure():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
     if not azure.authorized:
         return redirect(url_for("azure.login"))
     try:
@@ -195,6 +201,8 @@ def upload_file():
 # asks for user confirmation then sends the emails
 @app.route('/upload', methods=['POST'])
 def preview_and_send():
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
     try:
         if "go-back" in request.form:
             return redirect(url_for('index'))
