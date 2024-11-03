@@ -104,7 +104,7 @@ class User:
         elif email_type == 'google':
             return Google_User(email)
         elif email_type == 'azure':
-            return Azure_User(email, None)
+            return Azure_User(email)
         return None
 
 """
@@ -166,13 +166,13 @@ Encapsulates a signed in Azure account using OAuth.
 An object should be instantiated only be called AFTER it has been authorized.
 """
 class Azure_User(User):
-    def __init__(self, email, access_token):
+    def __init__(self, email):
         super().__init__()
         self.email_type = "azure"
         self.email = email
         self.is_authenticated = azure.authorized
         self.is_active = self.is_authenticated
-        self.access_token = access_token
+        self.access_token = azure.access_token
     
     """
     Crafts an email and sends that email to target recipient
