@@ -70,7 +70,7 @@ class Image_Count_Manager:
     def __del__(self):
         # Connector has to be manually closed since session.close() is a coroutine, and it may not be able
         # to run as event loops could be closed when exiting the program. The connector is then
-        # manually detached to prevent false error messages of session not being closed.
+        # manually detached to prevent false error messages of connector not being closed.
         self.session.connector.close()
         self.session.detach()
         self.event_loop.close()
