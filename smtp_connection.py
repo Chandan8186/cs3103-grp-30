@@ -33,7 +33,8 @@ class SMTP_Connection:
         Establishes SMTP connection to given SMTP server.
         """
         self.smtp = smtplib.SMTP(self.host, self.port)
-        self.smtp.starttls()
+        if (self.port == 587):
+            self.smtp.starttls()
         try:
             self.smtp.login(self.user, self.password)
         except Exception as err:

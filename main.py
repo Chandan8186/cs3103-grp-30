@@ -14,6 +14,9 @@ from login import LoginForm, User, SMTP_User, Google_User, Azure_User
 import os
 import keyring
 import json
+import time
+
+RATE_LIMIT = 20
 
 app = Flask(__name__)
 app.secret_key = "testing"
@@ -207,11 +210,25 @@ def preview_and_send():
             return redirect(url_for('index'))
         
         emails = parser.prepare_all_emails(request.form.get('department'))
+        email_sent_count = 0
+        start_time = time.time()
         for email in emails:
+            if (email_sent_count == RATE_LIMIT):
+                end_time = time.time()
+                time_spent = end_time - start_time
+                time.sleep(62 - time_spent)
+                email_sent_count = 0
+            
             recipient = email['email']
             subject = email['subject']
             body = email['body']
-            current_user.send_message(recipient, subject, body)
+
+            try:
+                current_user.send_message(recipient, subject, body)
+            except TokenExpiredError:
+                return render_template("login.html")
+
+            email_sent_count += 1
 
         parser.update_report_data(emails)
         report = parser.prepare_report()
