@@ -1,77 +1,75 @@
 from flask_dance.contrib.azure import azure
 from flask_dance.contrib.google import google
 from wtforms import Form, StringField, PasswordField, validators, ValidationError
+from wtforms.csrf.session import SessionCSRF
 from email.message import EmailMessage
-from base64 import urlsafe_b64encode
+from base64 import urlsafe_b64encode, b64encode
 from smtp_connection import SMTP_Connection
-from keyring import get_password
+from datetime import timedelta
+from flask import session, flash
+from parser import EMAIL_REGEX
 import keyring
 import json
-
-def retrieve_secret(key_name):
-    return keyring.get_password('SmartMailerApp', key_name)
+import re
 
 SMTP_SERVERS = {"yahoo.com": "smtp.mail.yahoo.com", 
                 "gmail.com": "smtp.gmail.com", 
                 "hotmail.com": "smtp-mail.outlook.com", 
                 "outlook.com": "smtp-mail.outlook.com"}
 
-def validate_email(form, field):
-    idx = field.data.rfind("@")
-    email_server = field.data[idx + 1:]
-    if idx == -1 or email_server not in SMTP_SERVERS:
-        raise ValidationError("This field requires a valid email.")
+def retrieve_secret(key_name):
+    return keyring.get_password('SmartMailerApp', key_name)
 
+def validate_email(form, field):
+    email = field.data
+    if re.match(EMAIL_REGEX, email) is None:
+        raise ValidationError(f"'{email}' is not a valid email.")
+    email_server = email[email.rfind("@") + 1:]
+    if email_server not in SMTP_SERVERS:
+        raise ValidationError("This email server is not currently supported.")
+
+"""
+A form used to obtain SMTP email and password from the user.
+"""
 class LoginForm(Form):
+    class Meta:
+        csrf = True
+        csrf_class = SessionCSRF # Uses session-based  
+        csrf_secret = b"testing123"
+        csrf_time_limit = timedelta(minutes=20)
+
+        @property
+        def csrf_context(self):
+            return session
+        
     email = StringField('Email Address', [validators.InputRequired("Please enter your email."), validate_email])
     password = PasswordField('Password', [validators.InputRequired("Please enter your password.")])
 
+"""
+Encapsulates a user.
+Used with Flask-Login to manage user details.
+"""
 class User:
     def __init__(self):
         self.email = None
-        self.password = None
-        self.access_token = None
-        self.oauth = None
-        self.email_sender = None
-        self.oauth_type = None
+        self.email_type = None
         self.is_authenticated = False
         self.is_active = False
         self.is_anonymous = False
 
+    """
+    Returns a unique identifier for this user.
+    """
     def get_id(self):
-        return f"{self.email}_{self.oauth_type == None}"
-
-    def login_smtp(self, email, password):
-        email_server = email[email.rfind("@") + 1:]
-        self.email = email
-        self.password = password
-        self.email_sender = SMTP_Connection(SMTP_SERVERS[email_server], 587, email, password)
-        self.email_sender.connect()
-        self.is_authenticated = True
-        self.is_active = self.is_authenticated
-        return True
-
-    """
-    Sets up user as a logged in google account.
-    This function should only be called AFTER it has been authorized.
-    """
-    def login_google(self, email):
-        self.oauth = "google"
-        self.email = email
-        self.is_authenticated = google.authorized
-        self.is_active = self.is_authenticated
-    """
-    Sets up user as a logged in outlook account.
-    This function should only be called AFTER it has been authorized
-    """
-    def login_outlook(self, email, token):
-        self.oauth = "outlook"
-        self.email = email
-        self.is_authenticated = azure.authorized
-        self.is_active = self.is_authenticated
-        self.access_token = token
-        return f"{self.email}_{self.oauth_type == None}"
+        return f"{self.email}_{self.email_type}"
     
+    """
+    Returns a MIME format representation of the email message.
+    Parameters:
+        recipient (str): receiver of email to be crafted.
+        subject (str): subject of email to be crafted.
+        body (str): body content of email to be crafted.
+    """
     def _get_message(self, recipient, subject, body):
         msg = EmailMessage()
         msg["To"] = recipient
@@ -80,8 +78,13 @@ class User:
         msg.set_content(body, subtype="html")
         return msg
     
+    """
+    Loads the user with the matching user_id from keyring.
+    Parameters:
+        user_id (str): Unique identifier of the user.
+    """
     @staticmethod
-    def load(user_id, sessions):
+    def load(user_id):
         # Retrieve user data from keyring
         data = retrieve_secret(user_id)
         if not data:
@@ -92,30 +95,40 @@ class User:
             user_info = json.loads(data)
         except json.JSONDecodeError:
             return None
-        user_type = user_info.get('user_type')
-        email = user_info.get('email')
-
-        if user_type == 'SMTP':
+        split_idx = user_id.rindex("_")
+        email_type = user_id[split_idx + 1:]
+        email = user_id[:split_idx]
+        if email_type == 'smtp':
             password = user_info.get('password')
             return SMTP_User(email, password)
-        elif user_type == 'Google':
-            return Google_User(email, sessions["google"])
-        elif user_type == 'Azure':
-            return Azure_User(email, sessions["azure"])
-        else:
-            return None
+        elif email_type == 'google':
+            return Google_User(email)
+        elif email_type == 'azure':
+            return Azure_User(email)
+        return None
 
-
+"""
+Encapsulates an SMTP user.
+Verification of email and password is left to the SMTP server.
+"""
 class SMTP_User(User):
     def __init__(self, email, password):
         super().__init__()
         email_server = email[email.rfind("@") + 1:]
+        self.email_type = "smtp"
         self.email = email
         self.password = password
         self.email_sender = SMTP_Connection(SMTP_SERVERS[email_server], 587, email, password)
         self.is_authenticated = True
         self.is_active = True
 
+    """
+    Crafts an email and sends that email to target recipient.
+    Parameters:
+        recipient (str): receiver of email to be crafted.
+        subject (str): subject of email to be crafted.
+        body (str): body content of email to be crafted.
+    """
     def send_message(self, recipient, subject, body):
         if not self.email_sender.smtp:
             self.email_sender.connect()
@@ -123,78 +136,57 @@ class SMTP_User(User):
 
 """
 Encapsulates a signed in Google account using OAuth.
-This function should only be called AFTER it has been authorized.
+An object should be instantiated only be called AFTER it has been authorized.
 """
 class Google_User(User):
-    def __init__(self, email, session):
+    def __init__(self, email):
         super().__init__()
-        self.session = session
-        self.oauth_type = "google"
+        self.email_type = "google"
         self.email = email
-        self.is_authenticated = session.authorized
+        self.is_authenticated = google.authorized
         self.is_active = self.is_authenticated
 
+    """
+    Crafts an email and sends that email to target recipient.
+    Parameters:
+        recipient (str): receiver of email to be crafted.
+        subject (str): subject of email to be crafted.
+        body (str): body content of email to be crafted.
+    """
     def send_message(self, recipient, subject, body):
         msg = self._get_message(recipient, subject, body)
         encoded_message = urlsafe_b64encode(msg.as_bytes()).decode()
-        create_message = {"raw": encoded_message}
-        rsp = self.session.post(f"/gmail/v1/users/{self.email}/messages/send", json=create_message)
+        json_message = {"raw": encoded_message}
+        rsp = google.post(f"/gmail/v1/users/{self.email}/messages/send", json=json_message)
         if not rsp.ok or "labelIds" not in rsp.json() or "SENT" not in rsp.json()["labelIds"]:
-            print("Failed to send.")
+            flash(f"Failed to send email to {recipient} due to :{rsp.reason}.")
 
 """
 Encapsulates a signed in Azure account using OAuth.
-This function should only be called AFTER it has been authorized.
+An object should be instantiated only be called AFTER it has been authorized.
 """
 class Azure_User(User):
-    def __init__(self, email, session):
+    def __init__(self, email):
         super().__init__()
-        self.session = session
-        self.oauth_type = "azure"
+        self.email_type = "azure"
         self.email = email
-        self.is_authenticated = session.authorized
+        self.is_authenticated = azure.authorized
         self.is_active = self.is_authenticated
+        self.access_token = azure.access_token
     
-    
+    """
+    Crafts an email and sends that email to target recipient
+    Parameters:
+        recipient (str): receiver of email to be crafted.
+        subject (str): subject of email to be crafted.
+        body (str): body content of email to be crafted.
+    """
     def send_message(self, recipient, subject, body):
-        """
-        Crafts an email and sends that email to target recipient
+        msg = self._get_message(recipient, subject, body)
+        encoded_message = b64encode(msg.as_bytes()).decode()
+        headers = {"Authorization": f'Bearer {self.access_token}', "Content-Type": "text/plain"}
+        rsp = azure.post("/v1.0/me/sendMail", data=encoded_message, headers=headers)
+        if (not rsp.ok):
+            flash(f"Failed to send email to {recipient} due to :{rsp.reason}.")
 
-        Parameters:
-            recipient (str): receiver of email to be crafted
-            subject (str): subject of email to be crafted
-            body (str): body content of email to be crafted
-        """
-        create_headers = {"Authorization": f'Bearer {self.access_token}',
-                   "Content-Type": "application/json"}
-        create_message = {
-            "subject": subject,
-            "body": {
-                "contentType": "HTML",
-                "content": body
-            },
-            "toRecipients": [
-                {
-                    "emailAddress": {
-                        "address":recipient
-                    }
-                }
-            ]
-        }
-
-        # Craft an email draft first
-        create_rsp = azure.post("https://graph.microsoft.com/v1.0/me/messages", headers=create_headers, json=create_message)
-
-        message_id = ""
-        if (create_rsp.ok):
-            message_id = create_rsp.json()["id"]
-
-            send_headers = {"Authorization": f'Bearer {self.access_token}'}
-
-            # Send the email draft to target recipient
-            send_rsp = azure.post(f"https://graph.microsoft.com/v1.0/me/messages/{message_id}/send", headers=send_headers)
-            if (not send_rsp.ok):
-                print("Failed to send message")
-        else :
-            print("Failed to create message")
  

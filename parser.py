@@ -4,6 +4,11 @@ import asyncio
 import hashlib
 import re
 
+# Email regex is roughly based on RFC 5322 and 1034 of Internet Message Format
+# it may not allow for some (likely rare) addresses
+# Source: https://www.w3.org/TR/2012/WD-html-markup-20120329/input.email.html
+EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$')
+
 class Parser:
     """
     Parser class to parse, prepare and track mail data.
@@ -35,10 +40,6 @@ class Parser:
         self.mail_data_path = mail_data_path
         self.mail_body_path = mail_body_path
         self.report = {}
-        # Email regex is roughly based on RFC 5322 and 1034 of Internet Message Format
-        # it may not allow for some (likely rare) addresses
-        # Source: https://www.w3.org/TR/2012/WD-html-markup-20120329/input.email.html
-        self.EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$')
 
         # 1. Read mail data
         try:
@@ -82,7 +83,7 @@ class Parser:
             raise ValueError("Mail Data CSV must not contain a department code named 'all'")
 
         for email in self.mail_data_df['email']:
-            if re.match(self.EMAIL_REGEX, email) is None:
+            if re.match(EMAIL_REGEX, email) is None:
                 raise ValueError(f"At least one email address: '{email}' does not follow the RFC 5322 and 1034 format")
 
         # 2. Read mail body
