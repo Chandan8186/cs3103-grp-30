@@ -6,13 +6,15 @@
 
 
 <h3>Department to send to: {{ "All Departments" if department == "all" else department }}</h3>
+<h3>Placeholders*: {{ placeholders }}</h3>
+<h2>First Recipient's Preview:</h2>
 <h3>Subject: {{ subject if subject else "(Empty Subject)" }}</h3>
 <h3>Body:</h3>
 <div class="box">
     <div>{{ body | safe }}</div>
 </div>
 
-<h5>* Note that #name# and #department# will be replaced with the relevant recipient's name and department respectively.
+<h5>* Note that the placeholders will be replaced with the relevant recipient's field respectively.
 </h5>
 
 <form action="{{ url_for('preview_and_send') }}" method="post" enctype="multipart/form-data">

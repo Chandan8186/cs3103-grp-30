@@ -188,9 +188,18 @@ def upload_file():
                 report = parser.prepare_report()
                 hashes = [email['hash'] for email in emails]
                 image_count_manager.update_unique_id_list(hashes)
-                return render_template('upload.html', emails=emails, report=report)
+                
+                return render_template('upload.html', emails=emails, headers=parser.headers, report=report)
             else:
-                return render_template('preview.html', department=department, subject=parser.subject, body=parser.body)
+                email = parser.prepare_first_email()
+                placeholders = ['#' + header + '#' for header in parser.headers]
+                placeholders = ', '.join(placeholders)
+
+                return render_template('preview.html', 
+                                       department=department, 
+                                       subject=email['subject'], 
+                                       body=email['body'],
+                                       placeholders=placeholders)
 
         except Exception as e:
             flash(f'An error occurred: {str(e)}')
@@ -218,7 +227,7 @@ def preview_and_send():
         hashes = [email['hash'] for email in emails]
         image_count_manager.update_unique_id_list(hashes)
 
-        return render_template('upload.html', emails=emails, report=report)
+        return render_template('upload.html', emails=emails, headers=parser.headers, report=report)
     except Exception as e:
         flash(f'An error occurred: {str(e)}')
         return redirect(url_for('index'))

@@ -18,6 +18,7 @@ class Parser:
     mail_body_path (str): Path to mail body txt file.
     report (dict): Dictionary storing number of emails sent to each department.
     mail_data_df (pd.df): Dataframe containing mail data.
+    headers (list): All headers specified by user. Must be at most 5. Must include name and department.
     departments (set): Set of all unique departments.
     subject (str): Mail subject template.
     body (str): Mail body template.
@@ -38,6 +39,7 @@ class Parser:
         self.mail_data_path = mail_data_path
         self.mail_body_path = mail_body_path
         self.report = {}
+        self.headers = []
 
         # 1. Read mail data
         try:
@@ -49,14 +51,27 @@ class Parser:
         except Exception as e:
             raise Exception(f"An unexpected error occurred while reading mail data csv file: {e}")
         
+        # 1.1. Check for required columns
         required_fields = ['email', 'name', 'department']
         if not all(col in mail_data_df.columns for col in required_fields):
-            raise ValueError("Mail Data CSV must be a csv file containing 'email', 'name', and 'department' columns")
+            raise ValueError("Mail Data CSV must be a csv file containing at least 'email', 'name', and 'department' columns")
         if mail_data_df.isna().any().any():
-            raise ValueError(f"{self.mail_data_path.replace('uploads/', '')} must not contain empty values")
-        
+            raise ValueError("Mail Data CSV must not contain empty values")
+
         self.mail_data_df = mail_data_df.drop_duplicates()
 
+        # 1.2 Check for optional fields
+        headers = self.mail_data_df.columns.tolist()
+        if len(headers) - 3 > 3:
+            raise ValueError("There should be at most 5 email fields including 'name' and 'department' in Mail Data CSV")
+        with open(mail_data_path, 'r') as file:
+            headers_temp = file.readline().strip().split(",")
+        if len(headers_temp) != len(set(headers_temp)):
+            raise ValueError("All email fields should be unique in Mail Data CSV")
+        headers.remove('email')
+        self.headers = headers
+
+        # 1.3. Collate all departments
         departments = []
         for department in self.mail_data_df['department']:
             departments.append(department)
@@ -66,6 +81,7 @@ class Parser:
         if "all" in self.departments:
             raise ValueError("Mail Data CSV must not contain a department code named 'all'")
 
+        # 1.4. Check for email address validity
         for email in self.mail_data_df['email']:
             if re.match(EMAIL_REGEX, email) is None:
                 raise ValueError(f"At least one email address: '{email}' does not follow the RFC 5322 and 1034 format")
@@ -90,7 +106,7 @@ class Parser:
         Filters mail_data df by given department.
         
         Parameters:
-        mail_data_df (pd.df): DataFrame containing emails, names and departments.
+        mail_data_df (pd.df): DataFrame containing emails, names and departments (and optional headers).
         department (str): Department code to filter by.
 
         Returns:
@@ -107,18 +123,17 @@ class Parser:
         Parameters:
         template_subject (str): Subject of email template.
         template_body (str): Body of email template.
-        recipient_data (dict): Recipient data containing name, email and department.
+        recipient_data (dict): Recipient data containing name, email and department (and optional headers).
 
         Returns:
         str, str: Subject and body of email template.
         """
         subject = self.subject
-        subject = subject.replace('#name#', recipient_data['name'])
-        subject = subject.replace('#department#', recipient_data['department'])
-
         body = self.body
-        body = body.replace('#name#', recipient_data['name'])
-        body = body.replace('#department#', recipient_data['department'])
+
+        for header in self.headers:
+            subject = subject.replace('#' + header + '#', recipient_data[header])
+            body = body.replace('#' + header + '#', recipient_data[header])
 
         md5_hash = hashlib.md5((recipient_data['email'] + subject + body).encode()).hexdigest()
         return subject, body, md5_hash
@@ -129,6 +144,31 @@ class Parser:
 
         for i in range(len(emails)):
             emails[i]['body'] = emails[i]['body'].replace('</body>', f'<img src="{image_links[i]}"></body>', 1)
+
+    def prepare_first_email(self, department='all'):
+        """
+        Prepares email subject and body for all recipients in string format.
+        This is used only for the preview page.
+
+        Parameters:
+        department (str): Department code to filter by.
+
+        Returns:
+        dict with email, name, department, subject and body
+        """
+        # 1. Filter by department code
+        filtered_mail_data_df = self._filter_by_department(department)
+        email = filtered_mail_data_df.to_dict(orient='records')[0]
+
+        # 2. Prepare email
+        subject, body, md5_hash = self._prepare_email_content(email)
+        email['subject'] = subject
+        email['body'] = body
+        email['body_view'] = body
+        email['hash'] = md5_hash
+        email['id'] = str(0)
+
+        return email
 
     def prepare_all_emails(self, department='all', attach_transparent_images=True):
         """
