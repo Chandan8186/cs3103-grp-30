@@ -35,7 +35,7 @@ azure_bp = make_azure_blueprint(
     client_id="",
     client_secret="",
     redirect_to="login_azure",
-    scope=["https://graph.microsoft.com/User.Read", "https://graph.microsoft.com/Mail.Send"]
+    scope=["https://graph.microsoft.com/User.Read", "https://graph.microsoft.com/Mail.Send", "https://graph.microsoft.com/offline_access"]
 )
 
 app.register_blueprint(google_bp, url_prefix="/login")
