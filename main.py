@@ -132,7 +132,7 @@ def login_azure():
     except (InvalidGrantError, TokenExpiredError):
         return redirect(url_for("azure.login"))
     
-    user = Azure_User(email, azure)
+    user = Azure_User(email, azure.access_token)
     store_secret(user.get_id(), json.dumps({}))
 
     login_user(user, remember=True)

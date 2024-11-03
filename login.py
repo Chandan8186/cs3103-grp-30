@@ -3,7 +3,7 @@ from flask_dance.contrib.google import google
 from wtforms import Form, StringField, PasswordField, validators, ValidationError
 from wtforms.csrf.session import SessionCSRF
 from email.message import EmailMessage
-from base64 import urlsafe_b64encode
+from base64 import urlsafe_b64encode, b64encode
 from smtp_connection import SMTP_Connection
 from datetime import timedelta
 from flask import session, flash
@@ -82,7 +82,7 @@ class User:
         elif email_type == 'google':
             return Google_User(email)
         elif email_type == 'azure':
-            return Azure_User(email)
+            return Azure_User(email, None)
         return None
 from urllib import request
 
@@ -144,7 +144,7 @@ class Azure_User(User):
     """
     def send_message(self, recipient, subject, body):
         msg = self._get_message(recipient, subject, body)
-        encoded_message = urlsafe_b64encode(msg.as_bytes()).decode()
+        encoded_message = b64encode(msg.as_bytes()).decode()
         headers = {"Authorization": f'Bearer {self.access_token}', "Content-Type": "text/plain"}
         rsp = azure.post("/v1.0/me/sendMail", data=encoded_message, headers=headers)
         if (not rsp.ok):
