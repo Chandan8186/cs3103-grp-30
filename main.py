@@ -98,7 +98,7 @@ def login():
         login_user(user, remember=True)
 
         next = request.args.get('next')
-        # !TO VALIDATE IN PRODUCTION APP!
+        # !TO VALIDATE IN PRODUCTION APP! (with a valid domain name)
         # if not url_has_allowed_host_and_scheme(next, request.host):
         #     return flask.abort(400)
         return redirect(next or url_for('index'))
