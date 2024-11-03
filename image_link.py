@@ -1,4 +1,5 @@
 from datetime import timedelta, date
+from flask import flash
 import aiohttp
 import asyncio
 
@@ -16,18 +17,18 @@ async def _make_image_link(session, unique_id) -> str:
 
     async with session.get("https://ulvis.net/API/write/get", params=params) as redirect:
         if not redirect.ok:
-            print("Ulvis server is down... Returning default link with no view stats.")
+            flash("Ulvis server is down... Returning default link with no view stats.")
             return params["url"]
 
         parsed_redirect = await redirect.json()
 
         if "data" not in parsed_redirect or "url" not in parsed_redirect["data"]:
-            print(f"Error making image link for {unique_id}:", end=" ")
+            error_msg = f"Error making image link for {unique_id}: "
             # Check if error message can be found
             if "data" in parsed_redirect and "status" in parsed_redirect["data"]:
-                print(f"{parsed_redirect['data']['status']}.", end=" ")
-
-            print("Returning default link with no view stats.")
+                error_msg += f"{parsed_redirect['data']['status']}. "
+            error_msg += "Returning default link with no view stats."
+            flash(error_msg)
             return params["url"]
 
         return parsed_redirect["data"]["url"]
@@ -80,18 +81,19 @@ class Image_Count_Manager:
 
         async with self.session.get("https://ulvis.net/API/read/get", params=params) as redirect:
             if not redirect.ok:
-                print("Ulvis server is down... Returning counter stat as empty.")
+                flash("Ulvis server is down... Returning counter stat as empty.")
                 return ""
 
             parsed_redirect = await redirect.json()
 
             if "data" not in parsed_redirect or "hits" not in parsed_redirect["data"]:
-                print(f"Error getting image count for {unique_id}:", end=" ")
+                error_msg = f"Error getting image count for {unique_id}: "
                 # Check if error message can be found
                 if "error" in parsed_redirect and "msg" in parsed_redirect["error"]:
-                    print(f"{parsed_redirect['error']['msg']}.", end=" ")
+                    error_msg += f"{parsed_redirect['error']['msg']}. "
 
-                print("Returning counter stat as empty.")
+                error_msg += "Returning counter stat as empty."
+                flash(error_msg)
                 return ""
 
             return parsed_redirect["data"]["hits"]

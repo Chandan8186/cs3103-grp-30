@@ -1,3 +1,4 @@
+from flask import flash
 from parser import *
 
 import smtplib
@@ -39,9 +40,7 @@ class SMTP_Connection:
         try:
             self.smtp.login(self.user, self.password)
         except Exception as err:
-            print(f'Unable to connect or login into {self.host} due to the following reason:')
-            print(str(err))
-            sys.exit(1)
+            flash(f'Unable to connect or login into {self.host} due to the following reason:\n{str(err)}.')
     
     def __del__(self):
         """
@@ -60,6 +59,4 @@ class SMTP_Connection:
         try:
             self.smtp.send_message(msg)
         except Exception as err:
-            print("Unable to send message to recipient due to the following reason:")
-            print(str(err))
-            sys.exit(2)
+            flash(f"Unable to send message to recipient due to the following reason:\n{str(err)}.")

@@ -6,7 +6,7 @@ from email.message import EmailMessage
 from base64 import urlsafe_b64encode
 from smtp_connection import SMTP_Connection
 from datetime import timedelta
-from flask import session
+from flask import session, flash
 from parser import EMAIL_REGEX
 import keyring
 import json
@@ -120,7 +120,7 @@ class Google_User(User):
         json_message = {"raw": encoded_message}
         rsp = google.post(f"/gmail/v1/users/{self.email}/messages/send", json=json_message)
         if not rsp.ok or "labelIds" not in rsp.json() or "SENT" not in rsp.json()["labelIds"]:
-            print("Failed to send.")
+            flash(f"Failed to send email to {recipient} due to :{rsp.reason}.")
 
 """
 Encapsulates a signed in Azure account using OAuth.
@@ -148,7 +148,6 @@ class Azure_User(User):
         headers = {"Authorization": f'Bearer {self.access_token}', "Content-Type": "text/plain"}
         rsp = azure.post("/v1.0/me/sendMail", data=encoded_message, headers=headers)
         if (not rsp.ok):
-            print("Failed to send message")
-        print(rsp)
+            flash(f"Failed to send email to {recipient} due to :{rsp.reason}.")
 
  
