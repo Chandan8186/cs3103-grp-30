@@ -205,10 +205,17 @@ def upload_file():
                 image_count_manager.update_unique_id_list(hashes)
                 return render_template('upload.html', emails=emails, report=report)
             else:
+                # preview the first recipient's subject and body
+                first_name, first_department = parser.get_first_recipient(department)
+                first_subject = parser.subject.replace(parser.name_placeholder, first_name)
+                first_subject = first_subject.replace(parser.department_placeholder, first_department)
+                first_body = parser.body.replace(parser.name_placeholder, first_name)
+                first_body = first_body.replace(parser.department_placeholder, first_department)
+
                 return render_template('preview.html', 
                                        department=department, 
-                                       subject=parser.subject, 
-                                       body=parser.body, 
+                                       subject=first_subject, 
+                                       body=first_body, 
                                        name_placeholder=parser.name_placeholder, 
                                        department_placeholder=parser.department_placeholder)
 

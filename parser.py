@@ -145,6 +145,23 @@ class Parser:
         for i in range(len(emails)):
             emails[i]['body'] = emails[i]['body'].replace('</body>', f'<img src="{image_links[i]}"></body>', 1)
 
+    def get_first_recipient(self, department="all"):
+        """
+        Returns name and department of the first recipient.
+        
+        Parameters:
+        department (str): Department code to filter by.
+
+        Returns:
+        list of str: name, department
+        """
+        if department == "all":
+            return self.mail_data_df.iloc[0]['name'], self.mail_data_df.iloc[0]['department']
+        else:
+            recipient = self.mail_data_df.loc[self.mail_data_df['department'] == department].iloc[0]
+            return recipient['name'], department
+
+
     def prepare_all_emails(self, department='all', attach_transparent_images=True):
         """
         Prepares email subject and body for all recipients in string format.
