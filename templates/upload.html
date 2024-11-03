@@ -5,8 +5,9 @@
 <table border="1" style="width: 100%;">
     <tr>
         <th>Email</th>
-        <th>Name</th>
-        <th>Department</th>
+        {% for header in headers %}
+            <th>{{ header }}</th>
+        {% endfor %}
         <th>Subject</th>
         <th>Body</th>
         <th>View Count</th>
@@ -14,11 +15,16 @@
     {% for email in emails %}
         <tr>
             <td>{{ email.email }}</td>
-            <td>{{ email.name }}</td>
-            <td>{{ email.department }}</td>
-            <td>{{ email.subject }}</td>
+            {% for header in headers %}
+                <td>{{ email[header] }}</td>
+            {% endfor %}
             <td>
-                <div style="width: 80%; word-wrap: break-word; text-align: left;">
+                <div style="min-width: 200px;">
+                    {{ email.subject }}
+                </div>
+            </td>
+            <td>
+                <div style="width: 80%; min-width: 500px; word-wrap: break-word; text-align: left;">
                     {{ email.body_view|safe }}
                 </div>
             </td>

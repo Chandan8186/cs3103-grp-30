@@ -188,21 +188,18 @@ def upload_file():
                 report = parser.prepare_report()
                 hashes = [email['hash'] for email in emails]
                 image_count_manager.update_unique_id_list(hashes)
-                return render_template('upload.html', emails=emails, report=report)
+                
+                return render_template('upload.html', emails=emails, headers=parser.headers, report=report)
             else:
-                # preview the first recipient's subject and body
-                first_name, first_department = parser.get_first_recipient(department)
-                first_subject = parser.subject.replace(parser.name_placeholder, first_name)
-                first_subject = first_subject.replace(parser.department_placeholder, first_department)
-                first_body = parser.body.replace(parser.name_placeholder, first_name)
-                first_body = first_body.replace(parser.department_placeholder, first_department)
+                email = parser.prepare_first_email()
+                placeholders = ['#' + header + '#' for header in parser.headers]
+                placeholders = ', '.join(placeholders)
 
                 return render_template('preview.html', 
                                        department=department, 
-                                       subject=first_subject, 
-                                       body=first_body, 
-                                       name_placeholder=parser.name_placeholder, 
-                                       department_placeholder=parser.department_placeholder)
+                                       subject=email['subject'], 
+                                       body=email['body'],
+                                       placeholders=placeholders)
 
         except Exception as e:
             flash(f'An error occurred: {str(e)}')
@@ -230,7 +227,7 @@ def preview_and_send():
         hashes = [email['hash'] for email in emails]
         image_count_manager.update_unique_id_list(hashes)
 
-        return render_template('upload.html', emails=emails, report=report)
+        return render_template('upload.html', emails=emails, headers=parser.headers, report=report)
     except Exception as e:
         flash(f'An error occurred: {str(e)}')
         return redirect(url_for('index'))

@@ -3,43 +3,27 @@
 {% block content %}
 <h1>Upload your input files.</h1>
 
-<h3>Mail data .csv file format (sample)*:</h3>
+<h3>Mail data .csv file format*:</h3>
 <table>
     <tr>
         <td><b>email</b></td>
         <td><b>name</b></td>
         <td><b>department</b></td>
-        <td><b>name_placeholder</b></td>
-        <td><b>department_placeholder</b></td>
     </tr>
     <tr>
-        <td>john@yahoo.com</td>
-        <td>John</td>
-        <td>Media</td>
-        <td>/name/</td>
-        <td>/department/</td>
-    </tr>
-    <tr>
-        <td>jane@gmail.com</td>
-        <td>Jane</td>
-        <td>Media</td>
-        <td></td>
-        <td></td>
-    </tr>
-    <tr>
-        <td>mark@gmail.com</td>
-        <td>Mark</td>
-        <td>HR</td>
-        <td></td>
-        <td></td>
+        <td>...</td>
+        <td>...</td>
+        <td>...</td>
     </tr>
 </table>
-<h5>* name_placeholder and department_placeholder columns are optional. Leaving them out will assume the placeholders to be <i>#name#</i> and <i>#department#</i> respectively.</h5>
+<h5>* You may add up to 3 more (unique) fields in addition to name and department.</h5>
 
-<h3>Mail body .txt file format:</h3>
+<h3>Mail body .txt file format**:</h3>
 <h4>Line 1: subject (can be empty)</h4>
 <h4>Line 2: empty line</h4>
 <h4>Line 3 onwards: non-empty body (in HTML format)</h4>
+
+<h5>** The placeholders are #FIELD_NAME# e.g. #name#, #department#</h5>
 
 <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
     <label for="csv_file">Upload Mail Data CSV:</label>
