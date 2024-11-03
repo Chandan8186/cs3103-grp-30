@@ -13,6 +13,8 @@ class Parser:
     mail_body_path (str): Path to mail body txt file.
     report (dict): Dictionary storing number of emails sent to each department.
     mail_data_df (pd.df): Dataframe containing mail data.
+    name_placeholder (str): Placeholder for recipient name (default: #name# if not specified by user).
+    department_placeholder (str): Placeholder for recipient department (default: #department# if not specified by user).
     departments (set): Set of all unique departments.
     subject (str): Mail subject template.
     body (str): Mail body template.
@@ -51,8 +53,22 @@ class Parser:
         required_fields = ['email', 'name', 'department']
         if not all(col in mail_data_df.columns for col in required_fields):
             raise ValueError("Mail Data CSV must be a csv file containing 'email', 'name', and 'department' columns")
-        if mail_data_df.isna().any().any():
+        if mail_data_df[required_fields].isna().any().any():
             raise ValueError(f"{self.mail_data_path.replace('uploads/', '')} must not contain empty values")
+        
+        if 'name_placeholder' in mail_data_df:
+            if '<' in mail_data_df['name_placeholder'][0] or '>' in mail_data_df['name_placeholder'][0]:
+                raise ValueError("Name and department placeholders must not contain '<' or '>'")
+            self.name_placeholder = mail_data_df['name_placeholder'][0]
+        else:
+            self.name_placeholder = '#name#'
+
+        if 'department_placeholder' in mail_data_df:
+            if '<' in mail_data_df['department_placeholder'][0] or '>' in mail_data_df['department_placeholder'][0]:
+                raise ValueError("Name and department placeholders must not contain '<' or '>'")
+            self.department_placeholder = mail_data_df['department_placeholder'][0]
+        else:
+            self.department_placeholder = '#department#'
         
         self.mail_data_df = mail_data_df.drop_duplicates()
 
@@ -112,12 +128,12 @@ class Parser:
         str, str: Subject and body of email template.
         """
         subject = self.subject
-        subject = subject.replace('#name#', recipient_data['name'])
-        subject = subject.replace('#department#', recipient_data['department'])
+        subject = subject.replace(self.name_placeholder, recipient_data['name'])
+        subject = subject.replace(self.department_placeholder, recipient_data['department'])
 
         body = self.body
-        body = body.replace('#name#', recipient_data['name'])
-        body = body.replace('#department#', recipient_data['department'])
+        body = body.replace(self.name_placeholder, recipient_data['name'])
+        body = body.replace(self.department_placeholder, recipient_data['department'])
 
         md5_hash = hashlib.md5((recipient_data['email'] + subject + body).encode()).hexdigest()
         return subject, body, md5_hash

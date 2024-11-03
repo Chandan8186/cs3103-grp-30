@@ -205,7 +205,12 @@ def upload_file():
                 image_count_manager.update_unique_id_list(hashes)
                 return render_template('upload.html', emails=emails, report=report)
             else:
-                return render_template('preview.html', department=department, subject=parser.subject, body=parser.body)
+                return render_template('preview.html', 
+                                       department=department, 
+                                       subject=parser.subject, 
+                                       body=parser.body, 
+                                       name_placeholder=parser.name_placeholder, 
+                                       department_placeholder=parser.department_placeholder)
 
         except Exception as e:
             flash(f'An error occurred: {str(e)}')
