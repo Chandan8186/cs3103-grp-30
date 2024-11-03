@@ -74,27 +74,29 @@ class Image_Count_Manager:
 
     async def _get_image_count(self, unique_id) -> int:
         if unique_id == None:
-            return ""
+            return "error"
         params = {"type": "json",
                 # Ensures the input is a string, as there is no type checking for unique_id
                 "id": str(unique_id)}
 
         async with self.session.get("https://ulvis.net/API/read/get", params=params) as redirect:
             if not redirect.ok:
-                flash("Ulvis server is down... Returning counter stat as empty.")
-                return ""
+                # !Page would have to be refreshed for error message to be seen!
+                # flash("Ulvis server is down... Returning counter stat as empty.")
+                return "error"
 
             parsed_redirect = await redirect.json()
 
             if "data" not in parsed_redirect or "hits" not in parsed_redirect["data"]:
-                error_msg = f"Error getting image count for {unique_id}: "
-                # Check if error message can be found
-                if "error" in parsed_redirect and "msg" in parsed_redirect["error"]:
-                    error_msg += f"{parsed_redirect['error']['msg']}. "
+                # !Page would have to be refreshed for error message to be seen!
+                # error_msg = f"Error getting image count for {unique_id}: "
+                # # Check if error message can be found
+                # if "error" in parsed_redirect and "msg" in parsed_redirect["error"]:
+                #     error_msg += f"{parsed_redirect['error']['msg']}. "
 
-                error_msg += "Returning counter stat as empty."
-                flash(error_msg)
-                return ""
+                # error_msg += "Returning counter stat as empty."
+                # flash(error_msg)
+                return "error"
 
             return parsed_redirect["data"]["hits"]
 
@@ -119,6 +121,6 @@ class Image_Count_Manager:
         image_counts = self.event_loop.run_until_complete(self._get_image_counts())
         # Remove invalid ids to prevent unnecessary server spam
         for i in range(len(image_counts)):
-            if image_counts[i] == "":
+            if image_counts[i] == "error":
                 self.unique_id_list[i] = None
         return image_counts
