@@ -217,6 +217,7 @@ def preview_and_send():
                 end_time = time.time()
                 time_spent = end_time - start_time
                 time.sleep(62 - time_spent)
+                start_time = time.time()
                 email_sent_count = 0
             
             recipient = email['email']
