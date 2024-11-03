@@ -1,22 +1,24 @@
 from flask_dance.contrib.azure import azure
 from flask_dance.contrib.google import google
 from wtforms import Form, StringField, PasswordField, validators, ValidationError
+from wtforms.csrf.session import SessionCSRF
 from email.message import EmailMessage
 from base64 import urlsafe_b64encode
 from smtp_connection import SMTP_Connection
-from keyring import get_password
+from datetime import timedelta
+from flask import session
 from parser import EMAIL_REGEX
 import keyring
 import json
 import re
 
-def retrieve_secret(key_name):
-    return keyring.get_password('SmartMailerApp', key_name)
-
 SMTP_SERVERS = {"yahoo.com": "smtp.mail.yahoo.com", 
                 "gmail.com": "smtp.gmail.com", 
                 "hotmail.com": "smtp-mail.outlook.com", 
                 "outlook.com": "smtp-mail.outlook.com"}
+
+def retrieve_secret(key_name):
+    return keyring.get_password('SmartMailerApp', key_name)
 
 def validate_email(form, field):
     email = field.data
@@ -27,6 +29,16 @@ def validate_email(form, field):
         raise ValidationError("This email server is not currently supported.")
 
 class LoginForm(Form):
+    class Meta:
+        csrf = True
+        csrf_class = SessionCSRF
+        csrf_secret = b"testing123"
+        csrf_time_limit = timedelta(minutes=20)
+
+        @property
+        def csrf_context(self):
+            return session
+        
     email = StringField('Email Address', [validators.InputRequired("Please enter your email."), validate_email])
     password = PasswordField('Password', [validators.InputRequired("Please enter your password.")])
 
