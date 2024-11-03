@@ -1,9 +1,6 @@
 from flask import flash
 from parser import *
-
 import smtplib
-import sys
-
 
 class SMTP_Connection:
     """

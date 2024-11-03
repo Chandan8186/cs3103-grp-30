@@ -28,10 +28,13 @@ def validate_email(form, field):
     if email_server not in SMTP_SERVERS:
         raise ValidationError("This email server is not currently supported.")
 
+"""
+A form used to obtain SMTP email and password from the user.
+"""
 class LoginForm(Form):
     class Meta:
         csrf = True
-        csrf_class = SessionCSRF
+        csrf_class = SessionCSRF # Uses session-based  
         csrf_secret = b"testing123"
         csrf_time_limit = timedelta(minutes=20)
 
@@ -42,6 +45,10 @@ class LoginForm(Form):
     email = StringField('Email Address', [validators.InputRequired("Please enter your email."), validate_email])
     password = PasswordField('Password', [validators.InputRequired("Please enter your password.")])
 
+"""
+Encapsulates a user.
+Used with Flask-Login to manage user details.
+"""
 class User:
     def __init__(self):
         self.email = None
@@ -50,9 +57,19 @@ class User:
         self.is_active = False
         self.is_anonymous = False
 
+    """
+    Returns a unique identifier for this user.
+    """
     def get_id(self):
         return f"{self.email}_{self.email_type}"
     
+    """
+    Returns a MIME format representation of the email message.
+    Parameters:
+        recipient (str): receiver of email to be crafted.
+        subject (str): subject of email to be crafted.
+        body (str): body content of email to be crafted.
+    """
     def _get_message(self, recipient, subject, body):
         msg = EmailMessage()
         msg["To"] = recipient
@@ -61,6 +78,11 @@ class User:
         msg.set_content(body, subtype="html")
         return msg
     
+    """
+    Loads the user with the matching user_id from keyring.
+    Parameters:
+        user_id (str): Unique identifier of the user.
+    """
     @staticmethod
     def load(user_id):
         # Retrieve user data from keyring
@@ -84,8 +106,11 @@ class User:
         elif email_type == 'azure':
             return Azure_User(email)
         return None
-from urllib import request
 
+"""
+Encapsulates an SMTP user.
+Verification of email and password is left to the SMTP server.
+"""
 class SMTP_User(User):
     def __init__(self, email, password):
         super().__init__()
@@ -97,6 +122,13 @@ class SMTP_User(User):
         self.is_authenticated = True
         self.is_active = True
 
+    """
+    Crafts an email and sends that email to target recipient.
+    Parameters:
+        recipient (str): receiver of email to be crafted.
+        subject (str): subject of email to be crafted.
+        body (str): body content of email to be crafted.
+    """
     def send_message(self, recipient, subject, body):
         if not self.email_sender.smtp:
             self.email_sender.connect()
@@ -104,7 +136,7 @@ class SMTP_User(User):
 
 """
 Encapsulates a signed in Google account using OAuth.
-This function should only be called AFTER it has been authorized.
+An object should be instantiated only be called AFTER it has been authorized.
 """
 class Google_User(User):
     def __init__(self, email):
@@ -114,6 +146,13 @@ class Google_User(User):
         self.is_authenticated = google.authorized
         self.is_active = self.is_authenticated
 
+    """
+    Crafts an email and sends that email to target recipient.
+    Parameters:
+        recipient (str): receiver of email to be crafted.
+        subject (str): subject of email to be crafted.
+        body (str): body content of email to be crafted.
+    """
     def send_message(self, recipient, subject, body):
         msg = self._get_message(recipient, subject, body)
         encoded_message = urlsafe_b64encode(msg.as_bytes()).decode()
@@ -124,7 +163,7 @@ class Google_User(User):
 
 """
 Encapsulates a signed in Azure account using OAuth.
-This function should only be called AFTER it has been authorized.
+An object should be instantiated only be called AFTER it has been authorized.
 """
 class Azure_User(User):
     def __init__(self, email, access_token):
@@ -138,9 +177,9 @@ class Azure_User(User):
     """
     Crafts an email and sends that email to target recipient
     Parameters:
-        recipient (str): receiver of email to be crafted
-        subject (str): subject of email to be crafted
-        body (str): body content of email to be crafted
+        recipient (str): receiver of email to be crafted.
+        subject (str): subject of email to be crafted.
+        body (str): body content of email to be crafted.
     """
     def send_message(self, recipient, subject, body):
         msg = self._get_message(recipient, subject, body)

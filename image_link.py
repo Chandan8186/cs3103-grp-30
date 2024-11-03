@@ -5,8 +5,12 @@ import asyncio
 
 # Don't overwhelm the slow server
 REQUEST_LIMIT = 25
+# Unlikely to check email after 90 days
 EXPIRY_DATE = (date.today() + timedelta(days=90)).strftime("%m/%d/%Y")
 
+"""
+A coroutine to generate a single image link.
+"""
 async def _make_image_link(session, unique_id) -> str:
     params = {"url": "https://upload.wikimedia.org/wikipedia/commons/c/ca/1x1.png",
               "type": "json",
@@ -33,7 +37,6 @@ async def _make_image_link(session, unique_id) -> str:
 
         return parsed_redirect["data"]["url"]
 
-
 """
 Asynchronously generates unique links for each unique id.
 Usage: asyncio.run(make_image_links(unique_id_list))
@@ -51,16 +54,23 @@ async def make_image_links(unique_id_list) -> list[str]:
         return await asyncio.gather(*coroutines)
 
 
+"""
+Manages obtaining image counts.
+Unique ids are used to identify and retrieve links for getting image counts.
+"""
 class Image_Count_Manager:
     def __init__(self):
         self.unique_id_list = []
         self.session = None
         # Manually manage an event loop for this instance, to allow session (aiohttp.ClientSession)
-        # to be persistent across each call of get_image_counts().
+        # to be persistent across each call of get_image_counts(), making it much more responsive.
         self.event_loop = asyncio.new_event_loop()
         self.event_loop.run_until_complete(self._create_session())
 
     def __del__(self):
+        # Connector has to be manually closed since session.close() is a coroutine, and it may not be able
+        # to run as event loops could be closed when exiting the program. The connector is then
+        # manually detached to prevent false error messages of session not being closed.
         self.session.connector.close()
         self.session.detach()
         self.event_loop.close()
@@ -69,9 +79,15 @@ class Image_Count_Manager:
         conn = aiohttp.TCPConnector(limit=REQUEST_LIMIT)
         self.session = aiohttp.ClientSession(connector = conn)
 
+    """
+    Updates the unique ids which are used to obtain image view counts.
+    """
     def update_unique_id_list(self, unique_id_list):
         self.unique_id_list = unique_id_list
 
+    """
+    A coroutine to obtain a single image count.
+    """
     async def _get_image_count(self, unique_id) -> int:
         if unique_id == None:
             return "error"
