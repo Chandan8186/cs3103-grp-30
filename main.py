@@ -4,7 +4,7 @@ It contains the definition of routes and views for the application.
 """
 
 from flask import Flask, render_template, request, redirect, url_for, flash
-from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from flask_login import LoginManager, login_user, logout_user, current_user
 from flask_dance.contrib.google import make_google_blueprint, google
 from flask_dance.contrib.azure import make_azure_blueprint, azure
 from oauthlib.oauth2.rfc6749.errors import InvalidGrantError, TokenExpiredError 
@@ -76,7 +76,6 @@ def load_user(user_id):
     return User.load(user_id)
 
 @app.route('/logout', methods=['GET'])
-@login_required
 def logout():
     if current_user.is_authenticated:
         user_id = current_user.get_id()
