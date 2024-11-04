@@ -9,6 +9,10 @@ header {
     padding: 10px 0;
 }
 
+button.right {
+    float: right;
+}
+
 nav ul {
     list-style-type: none;
     margin: 0;

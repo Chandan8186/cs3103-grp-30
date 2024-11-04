@@ -8,7 +8,7 @@ Welcome to the #department# Team, #name#!
     <p>Please let us know if you have any questions!</p>
     <br/>
     <p>Best regards,</p>
-    <p>[Your Name]</p>
-    <p>[Your Position]</p>
+    <p>John</p>
+    <p>HR Manager, ABC Company</p>
   </body>
 </html>

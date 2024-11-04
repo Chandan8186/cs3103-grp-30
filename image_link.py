@@ -21,10 +21,16 @@ async def _make_image_link(session, unique_id) -> str:
 
     async with session.get("https://ulvis.net/API/write/get", params=params) as redirect:
         if not redirect.ok:
-            flash("Ulvis server is down... Returning default link with no view stats.")
-            return params["url"]
+            flash("Ulvis server is down... View stats may not function properly.")
+            print("make_image_links Error:", redirect.status)
+            return "https://ulvis.net/" + str(unique_id)
 
-        parsed_redirect = await redirect.json()
+        try:
+            parsed_redirect = await redirect.json()
+        except aiohttp.ContentTypeError:
+            flash("Ulvis server response had errors... View stats may not function properly.")
+            print("make_image_links Error:", redirect.status)
+            return "https://ulvis.net/" + str(unique_id)
 
         if "data" not in parsed_redirect or "url" not in parsed_redirect["data"]:
             error_msg = f"Error making image link for {unique_id}: "
@@ -99,9 +105,14 @@ class Image_Count_Manager:
             if not redirect.ok:
                 # !Page would have to be refreshed for error message to be seen!
                 # flash("Ulvis server is down... Returning counter stat as empty.")
+                print("Image_Link Error:", redirect.status)
                 return "error"
 
-            parsed_redirect = await redirect.json()
+            try:
+                parsed_redirect = await redirect.json()
+            except aiohttp.ContentTypeError:
+                print("Image_Link Error:", redirect.status)
+                return "" # Possible server issues. Try again in next refresh.
 
             if "data" not in parsed_redirect or "hits" not in parsed_redirect["data"]:
                 # !Page would have to be refreshed for error message to be seen!
@@ -134,7 +145,13 @@ class Image_Count_Manager:
     Asynchronously gets image download count for each unique id in self.unique_id_list.
     """
     def get_image_counts(self) -> list[str]:
-        image_counts = self.event_loop.run_until_complete(self._get_image_counts())
+        try:
+            coroutine = self._get_image_counts()
+            image_counts = self.event_loop.run_until_complete(coroutine)
+        except RuntimeError: # Previous loop still running
+            coroutine.close()
+            return []
+        
         # Remove invalid ids to prevent unnecessary server spam
         for i in range(len(image_counts)):
             if image_counts[i] == "error":
