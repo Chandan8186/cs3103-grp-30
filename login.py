@@ -189,7 +189,7 @@ class Azure_User(User):
     def send_message(self, recipient, subject, body):
         msg = self._get_message(recipient, subject, body)
         encoded_message = b64encode(msg.as_bytes()).decode()
-        headers = {"Authorization": f'Bearer {azure.access_token}', "Content-Type": "text/plain"}
+        headers = {"Authorization": f'Bearer {self.session.access_token}', "Content-Type": "text/plain"}
         rsp = self.session.post("/v1.0/me/sendMail", data=encoded_message, headers=headers)
         if (not rsp.ok):
             return "Error: " + rsp.reason
