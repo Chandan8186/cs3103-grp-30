@@ -10,6 +10,9 @@
         {% endfor %}
         <th>Subject</th>
         <th>Body</th>
+        {% if is_send %}
+        <th>Send Status</th>
+        {% endif %}
         <th>View Count</th>
     </tr>
     {% for email in emails %}
@@ -28,23 +31,68 @@
                     {{ email.body_view|safe }}
                 </div>
             </td>
+            {% if is_send %}
+            <td id="send_{{ email.id }}"></td>
+            {% endif %}
             <td id="count_{{ email.id }}"></td>
         </tr>
     {% endfor %}
 </table>
+
+<meta id="store" data-is_send="{{ is_send }}" data-num_emails="{{ emails|length }}">
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 <script>
-    function update(){
+    function update_count(){
         $.get("/update_count", function(data){
             for (let i = 0; i < data.length; i++) {
-                $("#count_" + i.toString()).text(data[i])
+                $("#count_" + i.toString()).text(data[i]);
             }
         });
     }
-    update()
-    var intervalId = setInterval(function() {
-        update()
+    update_count()
+    var interval_count = setInterval(function() {
+        update_count()
     }, 15000); // Updates every 15s
+
+    if ($("#store").data("is_send") == "True") {
+        var INTERVAL = 62000; // This is in milliseconds
+        var EMAILS_PER_INTERVAL = 20;
+        var prv_length = 0;
+        var email_length = $("#store").data("num_emails")
+        var outer_interval_send = null;
+        var inner_interval_send = null;
+
+        function update_send_status(){
+            $.get("/update_send_status", function(data){
+                for (let i = 0; i < data.length; i++) {
+                    $("#send_" + i.toString()).text(data[i]);
+                }
+                if (data.length >= email_length) {
+                    clearInterval(outer_interval_send);
+                    clearInterval(inner_interval_send);
+                } else if (data.length >= prv_length + EMAILS_PER_INTERVAL) {
+                    clearInterval(inner_interval_send);
+                    prv_length = data.length;
+                }
+            });
+        }
+        // Initial run
+        inner_interval_send = setInterval(function() {
+            update_send_status()
+        }, 2000);// Updates every 2s
+
+        outer_interval_send = setInterval(function() {
+            if (prv_length == 0) { // Still 0 after first interval has passed
+                clearInterval(outer_interval_send);
+                clearInterval(inner_interval_send);
+            } else {
+                clearInterval(inner_interval_send);
+                inner_interval_send = setInterval(function() {
+                    update_send_status()
+                }, 2000);// Updates every 2s
+            }
+        }, INTERVAL);
+    }
 </script>
 
 <h5>Note: if the View Count displays 'error', it is possible that you have clicked 'Check sent email view counts' before sending the emails. Please ensure that you have sent the emails first.</h5>

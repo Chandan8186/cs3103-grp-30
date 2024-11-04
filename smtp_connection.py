@@ -53,8 +53,10 @@ class SMTP_Connection:
 
         Parameter:
             msg (email.message.EmailMessage) : Email message containing the recipient, subject and body
+        Returns: (str): Error messages from sending email. Empty if successful.
         """
         try:
             self.smtp.send_message(msg)
+            return "✓"
         except Exception as err:
-            flash(f"Unable to send message to recipient due to the following reason:\n{str(err)}.")
+            return "Error: " + str(err)

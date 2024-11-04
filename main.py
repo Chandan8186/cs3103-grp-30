@@ -10,13 +10,11 @@ from flask_dance.contrib.azure import make_azure_blueprint, azure
 from oauthlib.oauth2.rfc6749.errors import InvalidGrantError, TokenExpiredError 
 from parser import Parser
 from image_link import Image_Count_Manager
+from email_manager import Email_Manager
 from login import LoginForm, User, SMTP_User, Google_User, Azure_User
 import os
 import keyring
 import json
-import time
-
-RATE_LIMIT = 20
 
 app = Flask(__name__)
 app.secret_key = "testing"
@@ -54,6 +52,7 @@ UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 image_count_manager = Image_Count_Manager()
+email_manager = Email_Manager()
 
 def store_secret(key_name, secret_value):
     keyring.set_password('SmartMailerApp', key_name, secret_value)
@@ -184,7 +183,6 @@ def upload_file():
             return redirect(url_for('index'))
 
         department = department_input if department_input else "all"
-
         try:
             if "view-counts" in request.form:
                 emails = parser.prepare_all_emails(department, attach_transparent_images=False)
@@ -192,12 +190,16 @@ def upload_file():
                 report = parser.prepare_report()
                 hashes = [email['hash'] for email in emails]
                 image_count_manager.update_unique_id_list(hashes)
-                
-                return render_template('upload.html', emails=emails, headers=parser.headers, report=report)
-            else:
+                return render_template('upload.html', emails=emails, headers=parser.headers,
+                                       report=report, is_send=False)
+
+            elif "preview-emails" in request.form:
                 email = parser.prepare_first_email()
                 placeholders = ['#' + header + '#' for header in parser.headers]
                 placeholders = ', '.join(placeholders)
+                
+                if not email_manager.allow_next_batch():
+                    return redirect(url_for('index'))
 
                 return render_template('preview.html', 
                                        department=department, 
@@ -219,34 +221,35 @@ def preview_and_send():
         if "go-back" in request.form:
             return redirect(url_for('index'))
         
+        if email_manager.is_sending():
+            flash("Note: The current batch of emails are still being sent. Previewing emails being sent instead.")
+            return redirect(url_for('sent_emails'))
+        
         emails = parser.prepare_all_emails(request.form.get('department'))
-        email_sent_count = 0
-        start_time = time.time()
-        for email in emails:
-            if (email_sent_count == RATE_LIMIT):
-                end_time = time.time()
-                time_spent = end_time - start_time
-                time.sleep(62 - time_spent)
-                start_time = time.time()
-                email_sent_count = 0
-            
-            recipient = email['email']
-            subject = email['subject']
-            body = email['body']
-
-            current_user.send_message(recipient, subject, body)
-            email_sent_count += 1
-
         parser.update_report_data(emails)
-        report = parser.prepare_report()
-        hashes = [email['hash'] for email in emails]
-        image_count_manager.update_unique_id_list(hashes)
+        email_manager.store_header_and_report(parser.headers, parser.prepare_report())
+        email_manager.send_emails(current_user._get_current_object(), emails)
 
-        return render_template('upload.html', emails=emails, headers=parser.headers, report=report)
+        return redirect(url_for('sent_emails'))
+
     except Exception as e:
         flash(f'An error occurred: {str(e)}')
         return redirect(url_for('index'))
 
+@app.get('/sent_emails')
+def sent_emails():
+    if not email_manager.headers:
+        flash("No recently sent emails were found.")
+        return redirect(url_for('index'))
+
+    hashes = [email['hash'] for email in email_manager.emails]
+    image_count_manager.update_unique_id_list(hashes)
+    return render_template('upload.html', emails=email_manager.emails, headers=email_manager.headers,
+                            report=email_manager.report, is_send=True)
+
+@app.get("/update_send_status")
+def update_send_status():
+    return email_manager.results
 
 @app.get("/update_count")
 def update_count():

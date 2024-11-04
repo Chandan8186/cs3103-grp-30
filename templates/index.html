@@ -36,6 +36,9 @@
     <input type="text" name="department_search" id="department_search" placeholder=""><br><br>
 
     <button name="preview-emails">Preview before sending</button><br><br>
-    <button name="view-counts">Check sent email view counts</button><br><br>
+    <button name="view-counts">View counts of specified CSV and Body</button><br><br>
+</form>
+<form action="{{ url_for('sent_emails') }}" method="get">
+    <button>Check most recently sent emails</button>
 </form>
 {% endblock %}

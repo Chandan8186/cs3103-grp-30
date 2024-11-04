@@ -21,7 +21,7 @@ async def _make_image_link(session, unique_id) -> str:
 
     async with session.get("https://ulvis.net/API/write/get", params=params) as redirect:
         if not redirect.ok:
-            flash("Ulvis server is down... Returning default link with no view stats.")
+            flash("Ulvis server is down... View stats may not function properly.")
             return params["url"]
 
         parsed_redirect = await redirect.json()
@@ -134,7 +134,13 @@ class Image_Count_Manager:
     Asynchronously gets image download count for each unique id in self.unique_id_list.
     """
     def get_image_counts(self) -> list[str]:
-        image_counts = self.event_loop.run_until_complete(self._get_image_counts())
+        try:
+            coroutine = self._get_image_counts()
+            image_counts = self.event_loop.run_until_complete(coroutine)
+        except RuntimeError: # Previous loop still running
+            coroutine.close()
+            return []
+        
         # Remove invalid ids to prevent unnecessary server spam
         for i in range(len(image_counts)):
             if image_counts[i] == "error":
