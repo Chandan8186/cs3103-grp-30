@@ -247,6 +247,11 @@ def sent_emails():
     return render_template('upload.html', emails=email_manager.emails, headers=email_manager.headers,
                             report=email_manager.report, is_send=True)
 
+@app.get("/cancel_sending_emails")
+def cancel_sending_emails():
+    email_manager.cancel()
+    return redirect(url_for('sent_emails'))
+
 @app.get("/update_send_status")
 def update_send_status():
     return email_manager.results

@@ -2,6 +2,13 @@
 
 {% block content %}
 <h1>Processed Emails</h1>
+
+{% if is_send %}
+<form action="{{ url_for('cancel_sending_emails') }}" method="get">
+    <button class='right' style="height:40px;width:130px">Cancel Sending Emails</button></a>
+</form>
+{% endif %}
+
 <table border="1" style="width: 100%;">
     <tr>
         <th>Email</th>
@@ -42,6 +49,10 @@
 <meta id="store" data-is_send="{{ is_send }}" data-num_emails="{{ emails|length }}">
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 <script>
+    $("a#test").click(function(){
+        $.get("/update_count", function(data){});
+    });
+
     function update_count(){
         $.get("/update_count", function(data){
             for (let i = 0; i < data.length; i++) {
@@ -57,7 +68,8 @@
     if ($("#store").data("is_send") == "True") {
         var INTERVAL = 62000; // This is in milliseconds
         var EMAILS_PER_INTERVAL = 20;
-        var prv_length = 0;
+        var prv_outer = 0;
+        var prv_inner = 0;
         var email_length = $("#store").data("num_emails")
         var outer_interval_send = null;
         var inner_interval_send = null;
@@ -70,9 +82,9 @@
                 if (data.length >= email_length) {
                     clearInterval(outer_interval_send);
                     clearInterval(inner_interval_send);
-                } else if (data.length >= prv_length + EMAILS_PER_INTERVAL) {
+                } else if (data.length >= prv_inner + EMAILS_PER_INTERVAL) {
                     clearInterval(inner_interval_send);
-                    prv_length = data.length;
+                    prv_inner = data.length;
                 }
             });
         }
@@ -82,10 +94,11 @@
         }, 2000);// Updates every 2s
 
         outer_interval_send = setInterval(function() {
-            if (prv_length == 0) { // Still 0 after first interval has passed
+            if (prv_outer == prv_inner) { // No change after an interval
                 clearInterval(outer_interval_send);
                 clearInterval(inner_interval_send);
             } else {
+                prv_outer = prv_inner;
                 clearInterval(inner_interval_send);
                 inner_interval_send = setInterval(function() {
                     update_send_status()

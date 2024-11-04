@@ -1,5 +1,5 @@
 from flask import flash
-from threading import Thread
+from threading import Thread, Event
 import time
 
 # Note: Need to update these values in upload.html as well
@@ -17,6 +17,7 @@ class Email_Manager:
         self.emails = []
         self.has_ran = False
         self._thread = None
+        self._cancel = Event()
         self.results = [] # Free to view while sending emails.
         self.report = None
         self.headers = None
@@ -31,12 +32,15 @@ class Email_Manager:
     def _send_emails(self):
         email_sent_count = 0
         start_time = time.time()
+
         for email in self.emails:
             if (email_sent_count == EMAILS_PER_INTERVAL):
                 time_spent = time.time() - start_time
-                time.sleep(INTERVAL - time_spent)
+                self._cancel.wait(INTERVAL - time_spent)
                 email_sent_count = 0
                 start_time = time.time()
+            if self._cancel.is_set():
+                break
             
             recipient = email['email']
             subject = email['subject']
@@ -62,6 +66,8 @@ class Email_Manager:
         self.user = user
         self.emails = emails
         self.has_ran = True
+        self._cancel.clear()
+        self.results.clear()
         self._thread = Thread(target=self._send_emails)
         self._thread.start()
 
@@ -84,9 +90,18 @@ class Email_Manager:
             return False
 
         self.has_ran = False
-        self.results.clear()
         return True
     
+    """
+    Stop sending the current batch of emails.
+    """
+    def cancel(self):
+        if not self.is_sending():
+            flash("There are no emails currently being sent to cancel.")
+            return
+        flash("Successfully cancelled.")
+        self._cancel.set()
+
     """
     Store headers and report for currently sending emails.
     Used to coordinate between currently sending emails their relevant details
