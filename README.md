@@ -35,6 +35,9 @@ Opening the web application should look something like this:
 
 Google and Outlook OAuth are available for the web application
 
-To get the client id and client secret for the your account, follow the [Google](https://developers.google.com/identity/protocols/oauth2/web-server#python) and [Outlook](https://learn.microsoft.com/en-us/partner-center/marketplace-offers/create-or-update-client-ids-and-secrets) official documentation
+To get the client id and client secret for the your account, follow the [Google](https://developers.google.com/identity/protocols/oauth2/web-server#python) and [Outlook](https://learn.microsoft.com/en-us/partner-center/marketplace-offers/create-or-update-client-ids-and-secrets) official documentation and for authorized urls do as follow:
 
 ![Credentials](images/credentialGoogle.png)
+
+Enter the client ID and secret into the code at the follow area of main.py, you may need to launch the web application again:
+![Code Main](images/codeMain.png)
