@@ -31,8 +31,8 @@ google_bp = make_google_blueprint(
     scope=["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/gmail.send"]
 )
 azure_bp = make_azure_blueprint(
-    client_id="330dc871-0335-46d2-81eb-c09d3c2df450",
-    client_secret="aI88Q~UvU3eLLX.RM9ELEdCE6zNO3nbNlwQ_UdzV",
+    client_id="",
+    client_secret="",
     redirect_to="login_azure",
     scope=["https://graph.microsoft.com/.default"]
 )
