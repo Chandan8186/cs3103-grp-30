@@ -6,7 +6,7 @@ from email.message import EmailMessage
 from base64 import urlsafe_b64encode, b64encode
 from smtp_connection import SMTP_Connection
 from datetime import timedelta
-from flask import session, flash
+from flask import session
 from parser import EMAIL_REGEX
 import keyring
 import json
@@ -128,11 +128,12 @@ class SMTP_User(User):
         recipient (str): receiver of email to be crafted.
         subject (str): subject of email to be crafted.
         body (str): body content of email to be crafted.
+    Returns: (str): Error messages from sending email. Empty if successful.
     """
     def send_message(self, recipient, subject, body):
         if not self.email_sender.smtp:
             self.email_sender.connect()
-        self.email_sender.send_message(self._get_message(recipient, subject, body))
+        return self.email_sender.send_message(self._get_message(recipient, subject, body))
 
 """
 Encapsulates a signed in Google account using OAuth.
@@ -143,7 +144,8 @@ class Google_User(User):
         super().__init__()
         self.email_type = "google"
         self.email = email
-        self.is_authenticated = google.authorized
+        self.session = google._get_current_object()
+        self.is_authenticated = self.session.authorized
         self.is_active = self.is_authenticated
 
     """
@@ -152,14 +154,16 @@ class Google_User(User):
         recipient (str): receiver of email to be crafted.
         subject (str): subject of email to be crafted.
         body (str): body content of email to be crafted.
+    Returns: (str): Error messages from sending email. Empty if successful.
     """
     def send_message(self, recipient, subject, body):
         msg = self._get_message(recipient, subject, body)
         encoded_message = urlsafe_b64encode(msg.as_bytes()).decode()
         json_message = {"raw": encoded_message}
-        rsp = google.post(f"/gmail/v1/users/{self.email}/messages/send", json=json_message)
+        rsp = self.session.post(f"/gmail/v1/users/{self.email}/messages/send", json=json_message)
         if not rsp.ok or "labelIds" not in rsp.json() or "SENT" not in rsp.json()["labelIds"]:
-            flash(f"Failed to send email to {recipient} due to :{rsp.reason}.")
+            return "Error: " + rsp.reason
+        return "✓"
 
 """
 Encapsulates a signed in Azure account using OAuth.
@@ -170,7 +174,8 @@ class Azure_User(User):
         super().__init__()
         self.email_type = "azure"
         self.email = email
-        self.is_authenticated = azure.authorized
+        self.session = azure._get_current_object()
+        self.is_authenticated = self.session.authorized
         self.is_active = self.is_authenticated
     
     """
@@ -179,13 +184,15 @@ class Azure_User(User):
         recipient (str): receiver of email to be crafted.
         subject (str): subject of email to be crafted.
         body (str): body content of email to be crafted.
+    Returns: (str): Error messages from sending email. Empty if successful.
     """
     def send_message(self, recipient, subject, body):
         msg = self._get_message(recipient, subject, body)
         encoded_message = b64encode(msg.as_bytes()).decode()
-        headers = {"Authorization": f'Bearer {azure.access_token}', "Content-Type": "text/plain"}
-        rsp = azure.post("/v1.0/me/sendMail", data=encoded_message, headers=headers)
+        headers = {"Authorization": f'Bearer {self.session.access_token}', "Content-Type": "text/plain"}
+        rsp = self.session.post("/v1.0/me/sendMail", data=encoded_message, headers=headers)
         if (not rsp.ok):
-            flash(f"Failed to send email to {recipient} due to :{rsp.reason}.")
+            return "Error: " + rsp.reason
+        return "✓"
 
  
