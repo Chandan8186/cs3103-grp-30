@@ -7,6 +7,14 @@ This is a project for [Option 1] Smart Mailer Program for CS3103 Assignment.
 * [Features](#features)
     *  [Logging in(OAuth)](#logging-into-your-account-oauth)
     *  [Logging in(password)](#logging-into-your-account-password)
+    *  [Uploading files](#uploading-files)
+    *  [Previewing Email](#preview-and-sending-emails)
+    *  [Viewing counts](#viewing-counts)
+    *  [Logging Out](#logging-out)
+* [Error Handling](#error-handling)
+    *  [Unable to login(OAuth)](#unable-to-login-via-oauth)
+    *  [Unable to login(OAuth) second time](#unable-to-login-via-oauth-the-second-time)
+    *  [Unable to send email for google Oauth](#unable-to-send-email-for-google-oauth)
 
 
 ## Introduction
