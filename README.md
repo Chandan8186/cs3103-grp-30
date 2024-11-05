@@ -48,17 +48,22 @@ Google and Outlook OAuth are available for the web application
 
 To get the client id and client secret for the your account, follow the [Google](https://developers.google.com/identity/protocols/oauth2/web-server#python) and [Outlook](https://learn.microsoft.com/en-us/partner-center/marketplace-offers/create-or-update-client-ids-and-secrets) official documentation and for authorized urls do as follow:
 
+```
+#Outlook
+http://localhost:5000/login/azure/authorized
+#Google
+http://127.0.0.1:5000/login/google/authorized
+```
+
+Here is an example:
 ![Credentials](images/credentialGoogle.png)
 
 Enter the client ID and secret into the code at the follow area of main.py, you may need to launch the web application again:
 ![Code Main](images/codeMain.png)
 
-Make sure to enable IMAP access for your email account:
-
-![enable IMAP](images/IMAP.png)
 ### Logging into your account password
 
-Enter the valid email and password for your email account. Google and outlooks supports only Oauth athentication, yahoo and hotmail allow for username and password authentication with our application
+Enter the valid email and password for your email account. Google and outlooks supports only Oauth athentication, yahoo and google allows for username and password authentication with our application
 
 ### Uploading files
 
@@ -76,4 +81,35 @@ Make sure that it is exactly as you want it to be before sending the email!
 
 ### Viewing counts
 
+If the mail is sent successfully, the following information would be displayed on the screen, showing the send status and the view count:
+![Sent Mail](images/sentMail.png)
+
+When a user opens the mail, the inbuilt redirect link tracker would trigger:
+
+![Opening email](images/openMail.png)
+
+The view count would increase as follows:
+
+![View Count](images/viewCount.png)
+
 ### Logging out
+
+Press the logout button at the top right of the webpage to exit
+
+## Error handling
+
+### Unable to login via Oauth
+
+Double check the client ID and secret key fields and that you have saved the edits
+
+### Unable to login via Oauth the second time
+
+Try clearing browsing cache or use incognito mode
+
+### Unable to send email for Google Oauth
+
+Try enabling IMAP access for your email account -> settings -> advanced settings -> forwarding and POP/IMAP:
+
+![enable IMAP](images/IMAP.png)
+
+You could also try SMTP login for Google
