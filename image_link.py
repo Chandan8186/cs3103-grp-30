@@ -19,7 +19,9 @@ async def _make_image_link(session, unique_id) -> str:
               # Ensures the input is a string, as there is no type checking for unique_id
               "custom": str(unique_id)}
     
-    for _ in range(3): # Retries
+    for i in range(3): # Retries
+        if i > 0:
+            asyncio.sleep(1)
         async with session.get("https://ulvis.net/API/write/get", params=params) as redirect:
             if not redirect.ok:
                 print("make_image_links Error:", redirect.status)
@@ -41,9 +43,7 @@ async def _make_image_link(session, unique_id) -> str:
 
             return parsed_redirect["data"]["url"]
 
-        asyncio.sleep(2)
-
-    flash("Ulvis server is down... View stats may not function properly.")
+    # flash("Ulvis server is down... View stats may not function properly.")
     return "https://ulvis.net/" + str(unique_id)
 
 """
@@ -104,7 +104,9 @@ class Image_Count_Manager:
                 # Ensures the input is a string, as there is no type checking for unique_id
                 "id": str(unique_id)}
 
-        for _ in range(3): # Retries
+        for i in range(3): # Retries
+            if i > 0:
+                asyncio.sleep(1)
             async with self.session.get("https://ulvis.net/API/read/get", params=params) as redirect:
                 if not redirect.ok:
                     print("Image_Link Error:", redirect.status)
@@ -126,9 +128,7 @@ class Image_Count_Manager:
 
                 return parsed_redirect["data"]["hits"]
 
-            asyncio.sleep(2)
-
-        flash("View stats failed to load for an email.")
+        # flash("View stats failed to load for an email.")
         return "error"
 
     """
