@@ -18,30 +18,33 @@ async def _make_image_link(session, unique_id) -> str:
               "expire": EXPIRY_DATE,
               # Ensures the input is a string, as there is no type checking for unique_id
               "custom": str(unique_id)}
+    
+    for _ in range(3): # Retries
+        async with session.get("https://ulvis.net/API/write/get", params=params) as redirect:
+            if not redirect.ok:
+                print("make_image_links Error:", redirect.status)
+                continue
+                
+            try:
+                parsed_redirect = await redirect.json()
+            except aiohttp.ContentTypeError:
+                print("make_image_links Error:", redirect.status)
+                continue
 
-    async with session.get("https://ulvis.net/API/write/get", params=params) as redirect:
-        if not redirect.ok:
-            flash("Ulvis server is down... View stats may not function properly.")
-            print("make_image_links Error:", redirect.status)
-            return "https://ulvis.net/" + str(unique_id)
+            if "data" not in parsed_redirect or "url" not in parsed_redirect["data"]:
+                error_msg = f"make_image_links Error for {unique_id}."
+                # Check if error message can be found
+                if "data" in parsed_redirect and "status" in parsed_redirect["data"]:
+                    error_msg += f" {parsed_redirect['data']['status']}."
+                print(error_msg)
+                continue
 
-        try:
-            parsed_redirect = await redirect.json()
-        except aiohttp.ContentTypeError:
-            flash("Ulvis server response had errors... View stats may not function properly.")
-            print("make_image_links Error:", redirect.status)
-            return "https://ulvis.net/" + str(unique_id)
+            return parsed_redirect["data"]["url"]
 
-        if "data" not in parsed_redirect or "url" not in parsed_redirect["data"]:
-            error_msg = f"Error making image link for {unique_id}: "
-            # Check if error message can be found
-            if "data" in parsed_redirect and "status" in parsed_redirect["data"]:
-                error_msg += f"{parsed_redirect['data']['status']}. "
-            error_msg += "Returning default link with no view stats."
-            flash(error_msg)
-            return params["url"]
+        asyncio.sleep(2)
 
-        return parsed_redirect["data"]["url"]
+    flash("Ulvis server is down... View stats may not function properly.")
+    return "https://ulvis.net/" + str(unique_id)
 
 """
 Asynchronously generates unique links for each unique id.
@@ -101,31 +104,32 @@ class Image_Count_Manager:
                 # Ensures the input is a string, as there is no type checking for unique_id
                 "id": str(unique_id)}
 
-        async with self.session.get("https://ulvis.net/API/read/get", params=params) as redirect:
-            if not redirect.ok:
-                # !Page would have to be refreshed for error message to be seen!
-                # flash("Ulvis server is down... Returning counter stat as empty.")
-                print("Image_Link Error:", redirect.status)
-                return "error"
+        for _ in range(3): # Retries
+            async with self.session.get("https://ulvis.net/API/read/get", params=params) as redirect:
+                if not redirect.ok:
+                    print("Image_Link Error:", redirect.status)
+                    continue
 
-            try:
-                parsed_redirect = await redirect.json()
-            except aiohttp.ContentTypeError:
-                print("Image_Link Error:", redirect.status)
-                return "" # Possible server issues. Try again in next refresh.
+                try:
+                    parsed_redirect = await redirect.json()
+                except aiohttp.ContentTypeError:
+                    print("Image_Link Error:", redirect.status)
+                    continue
 
-            if "data" not in parsed_redirect or "hits" not in parsed_redirect["data"]:
-                # !Page would have to be refreshed for error message to be seen!
-                # error_msg = f"Error getting image count for {unique_id}: "
-                # # Check if error message can be found
-                # if "error" in parsed_redirect and "msg" in parsed_redirect["error"]:
-                #     error_msg += f"{parsed_redirect['error']['msg']}. "
+                if "data" not in parsed_redirect or "hits" not in parsed_redirect["data"]:
+                    error_msg = f"Image_Link Error for {unique_id}."
+                    # Check if error message can be found
+                    if "error" in parsed_redirect and "msg" in parsed_redirect["error"]:
+                        error_msg += f" {parsed_redirect['error']['msg']}."
+                    print(error_msg)
+                    continue
 
-                # error_msg += "Returning counter stat as empty."
-                # flash(error_msg)
-                return "error"
+                return parsed_redirect["data"]["hits"]
 
-            return parsed_redirect["data"]["hits"]
+            asyncio.sleep(2)
+
+        flash("View stats failed to load for an email.")
+        return "error"
 
     """
     Asynchronously gets image download count for each unique id.
