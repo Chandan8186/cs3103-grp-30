@@ -1,6 +1,16 @@
 # cs3103-grp-30
 This is a project for [Option 1] Smart Mailer Program for CS3103 Assignment. 
 
+## Contents
+* [Introduction](#introduction)
+* [Setting up](#setting-up-smart-mailer-program)
+* [Features](#features)
+    *  [Logging in(OAuth)](#logging-into-your-account-oauth)
+    *  [Logging in(password)](#logging-into-your-account-password)
+
+
+## Introduction
+
 This smart mailer program will send mails to a list of emails provided in a csv using outlook, gmail and other smtp services. The program reads the rows and columns of the csv and replace the variable names of the draft email provided and send out each customized emails to the users.
 
 ## Setting up Smart Mailer Program
@@ -29,9 +39,10 @@ Press CTRL+C to quit
 Opening the web application should look something like this:
 ![main index](images/mainIndex.png)
 
-## Logging into your account
+## Features
+The smart mailer program allows you to send multiple resources and track them with ease on your email session
 
-### OAuth
+### Logging into your account OAuth
 
 Google and Outlook OAuth are available for the web application
 
@@ -41,3 +52,28 @@ To get the client id and client secret for the your account, follow the [Google]
 
 Enter the client ID and secret into the code at the follow area of main.py, you may need to launch the web application again:
 ![Code Main](images/codeMain.png)
+
+Make sure to enable IMAP access for your email account:
+
+![enable IMAP](images/IMAP.png)
+### Logging into your account password
+
+Enter the valid email and password for your email account. Google and outlooks supports only Oauth athentication, yahoo and hotmail allow for username and password authentication with our application
+
+### Uploading files
+
+After successfully logging in, upload your mail data csv file and mail body text file, followed by the department code to send to.
+
+We included a maildata.csv and body.txt test files for you to try and undertstand the formattings
+![upload](images/upload.png)
+
+### Preview and Sending Emails
+
+Before sending the emails, you can click on "Preview before sending" to check how the email looks like and which placeholders were replaced.
+
+Make sure that it is exactly as you want it to be before sending the email!
+![preview](images/preview.png)
+
+### Viewing counts
+
+### Logging out
