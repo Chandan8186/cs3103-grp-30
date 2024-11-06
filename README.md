@@ -47,7 +47,7 @@ Press CTRL+C to quit
 Opening the web application should look something like this:
 ![main index](images/mainIndex.png)
 
-**Note: if you are planning to use an Outlook Account to log in, please use this url: ```http://localhost```**
+**Note: if you are planning to use an Outlook Account to log in, please use this url: ```http://localhost:5000```**
 
 ## Features
 The smart mailer program allows you to send multiple resources and track them with ease on your email session
