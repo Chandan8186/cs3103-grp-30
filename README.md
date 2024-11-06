@@ -7,11 +7,11 @@ This is a project for [Option 1] Smart Mailer Program for CS3103 Assignment. Mor
 * [Introduction](#introduction)
 * [Setting up](#setting-up-smart-mailer-program)
 * [Features](#features)
-    *  [Logging in(OAuth)](#logging-into-your-account-oauth)
-    *  [Logging in(password)](#logging-into-your-account-password)
+    *  [Logging in (OAuth)](#logging-into-your-account-using-oauth)
+    *  [Logging in (Password)](#logging-into-your-smtp-account)
     *  [Uploading files](#uploading-files)
     *  [Previewing Email](#preview-and-sending-emails)
-    *  [Viewing counts](#viewing-counts)
+    *  [View counts](#view-counts)
     *  [Logging Out](#logging-out)
 * [Troubleshooting](#troubleshooting)
     *  [Unable to login(OAuth)](#unable-to-login-via-oauth)
@@ -21,20 +21,24 @@ This is a project for [Option 1] Smart Mailer Program for CS3103 Assignment. Mor
 
 ## Introduction
 
-This smart mailer program will send mails to a list of emails provided in a csv using outlook, gmail and other smtp services. The program reads the rows and columns of the csv and replace the variable names of the draft email provided and send out each customized emails to the users.
+This smart mailer program enables mass email sending with customisable fields and view count tracking. It takes in recipient details from a CSV file, and replaces the corresponding fields in the email body. We currently support gmail and outlook accounts, using either traditional email & password combos for sending with SMTP, or OAuth login for sending with REST APIs.
 
 ## Setting up Smart Mailer Program
-After git cloning the program, pip install the modules in the requirements.txt:
+Git clone the repository and  pip install the required packages:
 ```
 git clone https://github.com/Chandan8186/cs3103-grp-30.git
-#unzip and cd into the folder
+cd cs3103-grp-30
 pip install -r requirements.txt
 ```
 Launch the program with the following command:
 ```
+(on Windows)
 python main.py
+
+(on MacOS or Linux)
+python3 main.py
 ```
-If it is successful it should launch the web application on the localhost server:
+A successful launch on the localhost server should show the following:
 ```
 * Running on http://127.0.0.1:5000
 Press CTRL+C to quit
@@ -50,21 +54,22 @@ Opening the web application should look something like this:
 <br>
 ![main index](images/mainIndex.png)
 
-**Note: if you are planning to use an Outlook Account to log in, please use this url: ```http://localhost:5000```**
+**Note: if you are planning to use an Outlook Account using OAuth to log in, please use this url instead: ```http://localhost:5000```**
 
 ## Features
-The smart mailer program allows you to send multiple resources and track them with ease on your email session
+The smart mailer program allows you to schedule multiple batches of  emails at once, and track their send status and view counts with ease.
 
-### Logging into your account OAuth
+### Logging into your account using OAuth
 
-Google and Outlook OAuth are available for the web application
+Google and Outlook OAuth can be used for this web application.
 
-To get the client id and client secret for the your account, follow the [Google](https://developers.google.com/identity/protocols/oauth2/web-server#python) and [Outlook](https://learn.microsoft.com/en-us/partner-center/marketplace-offers/create-or-update-client-ids-and-secrets) official documentation and for authorized urls do as follow:
+Generating a client id and client secret is necessary to use OAuth (if you are hosting this application yourself). You may follow the [Google](https://developers.google.com/identity/protocols/oauth2/web-server#python) or [Outlook](https://learn.microsoft.com/en-us/partner-center/marketplace-offers/create-or-update-client-ids-and-secrets) official documentations to do so. Do remember to include the following authorized URIs:
 
 ```
-#Outlook
+(Outlook)
 http://localhost:5000/login/azure/authorized
-#Google
+
+(Google)
 http://127.0.0.1:5000/login/google/authorized
 ```
 
@@ -72,31 +77,33 @@ Here is an example:
 <br>
 ![Credentials](images/credentialGoogle.png)
 
-Enter the client ID and secret into the code at the follow area of main.py, you may need to launch the web application again:
+Paste the client ID and secret into `main.py` as required. You may need to relaunch the web application.
 <br>
 ![Code Main](images/codeMain.png)
 
-### Logging into your account password
+### Logging into your SMTP account
 
-Enter the valid email and password for your email account. Do note that some email providers like Gmail and Yahoo Mail requires users to input an application password as the password instead of their actual password.
+Fill in the login details for your email account. Do note that some email providers such as Gmail requires users to generate and use an application password instead of their actual password. You may follow the link [here](https://www.gmass.co/blog/gmail-smtp/) to set up your app password.
 
-**Note: Outlook only supports OAuth Authentication. Please refer to the instructions for logging into your account using [OAuth](#logging-into-your-account-oauth).** 
+**Note: Outlook has deprecated basic auth and SMTP may not work properly. Please use OAuth Authentication instead. You may refer to the following instructions for [logging into your account using OAuth](#logging-into-your-account-using-oauth).** 
 
 ### Uploading files
 
-After successfully logging in, upload your mail data csv file and mail body text file, followed by the department code to send to.
+After successfully logging in, upload the CSV file containing recipient details and the mail body file containing the email body, and enter the department code you wish to send to.
 
-We included a maildata.csv and body.txt test files for you to try and undertstand the formattings
+Please ensure the files are in the appropriate format. You may view the provided sample maildata.csv and body.txt files as an example.
+
 ![upload](images/upload.png)
 
 ### Preview and Sending Emails
 
-Before sending the emails, you can click on "Preview before sending" to check how the email looks like and which placeholders were replaced.
+After selecting your files, you may click on "Preview before sending" to verify whether the emails are correct. The first email will be shown with its placeholders replaced.
 
-Make sure that it is exactly as you want it to be before sending the email!
+Please ensure the emails are correct before sending!
+
 ![preview](images/preview.png)
 
-### Viewing counts
+### View counts
 
 If the mail is sent successfully, the following information would be displayed on the screen, showing the send status and the view count:
 <br>
@@ -112,27 +119,28 @@ The view count would increase as follows:
 
 ### Logging out
 
-Press the logout button at the top right of the webpage to exit
+You may press the logout button at the top right corner of the webpage to logout.
 
 ## Troubleshooting
 
 ### Unable to login via Oauth
 
-1. Double check the client ID and secret key fields and that you have saved the edits
+1. Double check the client ID and secret key fields and make sure you have saved the file.
 2. Verify that you have specified the necessary permissions. 
     - For Outlook, ensure you have specified the following API permissions and ensured that these permissions have been granted consent as shown below:
-    <br>
 
     ![Microsoft Azure API Perms](images/Microsoft%20Azure%20API%20Perms.JPG)
 
     - For Google, ensure you have enabled the Gmail API and specified the following API scopes:
-    <br>
+
     ![Google and Gmail API scopes](images/google_scopes.png)
-   
 
-### Unable to login via Oauth the second time
+3. Make sure the [URIs](#logging-into-your-account-using-oauth) have been properly set up.
+4. For Google OAuth, make sure to add your email into "Test users" if you did not set OAuth as published.
 
-Try clearing browsing cache or use incognito mode
+### Unable to login via OAuth after a second time
+
+Try clearing browsing cache/cookies, or use incognito mode
 
 ### Unable to send email for Google Oauth
 
