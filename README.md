@@ -45,6 +45,7 @@ Press CTRL+C to quit
 127.0.0.1 - - [04/Nov/2024 18:13:01] "GET /favicon.ico HTTP/1.1" 404 -
 ```
 Opening the web application should look something like this:
+<br>
 ![main index](images/mainIndex.png)
 
 **Note: if you are planning to use an Outlook Account to log in, please use this url: ```http://localhost:5000```**
@@ -66,9 +67,11 @@ http://127.0.0.1:5000/login/google/authorized
 ```
 
 Here is an example:
+<br>
 ![Credentials](images/credentialGoogle.png)
 
 Enter the client ID and secret into the code at the follow area of main.py, you may need to launch the web application again:
+<br>
 ![Code Main](images/codeMain.png)
 
 ### Logging into your account password
@@ -94,14 +97,15 @@ Make sure that it is exactly as you want it to be before sending the email!
 ### Viewing counts
 
 If the mail is sent successfully, the following information would be displayed on the screen, showing the send status and the view count:
+<br>
 ![Sent Mail](images/sentMail.png)
 
 When a user opens the mail, the inbuilt redirect link tracker would trigger:
-
+<br>
 ![Opening email](images/openMail.png)
 
 The view count would increase as follows:
-
+<br>
 ![View Count](images/viewCount.png)
 
 ### Logging out
@@ -115,11 +119,12 @@ Press the logout button at the top right of the webpage to exit
 1. Double check the client ID and secret key fields and that you have saved the edits
 2. Verify that you have specified the necessary permissions. 
     - For Outlook, ensure you have specified the following API permissions and ensured that these permissions have been granted consent as shown below:
+    <br>
 
     ![Microsoft Azure API Perms](images/Microsoft%20Azure%20API%20Perms.JPG)
 
     - For Google, ensure you have enabled the Gmail API and specified the following API scopes:
-
+    <br>
     ![Google and Gmail API scopes](images/google_scopes.png)
    
 
@@ -130,7 +135,7 @@ Try clearing browsing cache or use incognito mode
 ### Unable to send email for Google Oauth
 
 Try enabling IMAP access for your email account -> settings -> advanced settings -> forwarding and POP/IMAP:
-
+<br>
 ![enable IMAP](images/IMAP.png)
 
 Alternatively, You could also try SMTP login for Google
