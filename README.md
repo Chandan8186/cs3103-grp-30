@@ -71,7 +71,9 @@ Enter the client ID and secret into the code at the follow area of main.py, you 
 
 ### Logging into your account password
 
-Enter the valid email and password for your email account. Google and outlooks supports only Oauth athentication, yahoo and google allows for username and password authentication with our application
+Enter the valid email and password for your email account. Do note that some email providers like Gmail and Yahoo Mail requires users to input an application password as the password instead of their actual password.
+
+**Note: Outlook only supports OAuth Authentication. Please refer to the instructions for logging into your account using [OAuth](#logging-into-your-account-oauth).** 
 
 ### Uploading files
 
