@@ -63,7 +63,7 @@ class Parser:
         # 1.2 Check for optional fields
         headers = self.mail_data_df.columns.tolist()
         if len(headers) - 3 > 3:
-            raise ValueError("There should be at most 5 email fields including 'name' and 'department' in Mail Data CSV")
+            raise ValueError("There should be at most 5 email fields (i.e. placeholders) including 'name' and 'department' in Mail Data CSV")
         with open(mail_data_path, 'r') as file:
             headers_temp = file.readline().strip().split(",")
         if len(headers_temp) != len(set(headers_temp)):
