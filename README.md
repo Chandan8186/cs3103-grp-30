@@ -24,10 +24,8 @@ This is a project for [Option 1] Smart Mailer Program for CS3103 Assignment. Mor
 This smart mailer program enables mass email sending with customisable fields and view count tracking. It takes in recipient details from a CSV file, and replaces the corresponding fields in the email body. We currently support gmail and outlook accounts, using either traditional email & password combos for sending with SMTP, or OAuth login for sending with REST APIs.
 
 ## Setting up Smart Mailer Program
-Git clone the repository and  pip install the required packages:
+Navigate to `cs3103-grp-30` folder (located inside submission ZIP) and pip install the required packages:
 ```
-git clone https://github.com/Chandan8186/cs3103-grp-30.git
-cd cs3103-grp-30
 pip install -r requirements.txt
 ```
 Launch the program with the following command:
