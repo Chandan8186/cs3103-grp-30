@@ -118,7 +118,9 @@ Press the logout button at the top right of the webpage to exit
 
     ![Microsoft Azure API Perms](images/Microsoft%20Azure%20API%20Perms.JPG)
 
-    - For Google, ensure you have specified the follwing API permissions
+    - For Google, ensure you have enabled the Gmail API and specified the follwing API permissions:
+
+    ![Google and Gmail API scopes](images/google_scopes.png)
    
 
 ### Unable to login via Oauth the second time
