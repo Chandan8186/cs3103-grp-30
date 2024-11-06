@@ -1,5 +1,7 @@
 # cs3103-grp-30
-This is a project for [Option 1] Smart Mailer Program for CS3103 Assignment. 
+This is a project for [Option 1] Smart Mailer Program for CS3103 Assignment. More step by step guide could be found in the video:
+<br>
+<video controls src="images/CS3103_Project_Demo.mp4" title="Title"></video>
 
 ## Contents
 * [Introduction](#introduction)
