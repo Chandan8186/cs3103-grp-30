@@ -11,7 +11,7 @@ This is a project for [Option 1] Smart Mailer Program for CS3103 Assignment.
     *  [Previewing Email](#preview-and-sending-emails)
     *  [Viewing counts](#viewing-counts)
     *  [Logging Out](#logging-out)
-* [Error Handling](#error-handling)
+* [Troubleshooting](#troubleshooting)
     *  [Unable to login(OAuth)](#unable-to-login-via-oauth)
     *  [Unable to login(OAuth) second time](#unable-to-login-via-oauth-the-second-time)
     *  [Unable to send email for google Oauth](#unable-to-send-email-for-google-oauth)
@@ -104,11 +104,18 @@ The view count would increase as follows:
 
 Press the logout button at the top right of the webpage to exit
 
-## Error handling
+## Troubleshooting
 
 ### Unable to login via Oauth
 
-Double check the client ID and secret key fields and that you have saved the edits
+1. Double check the client ID and secret key fields and that you have saved the edits
+2. Verify that you have specified the necessary permissions. 
+    - For Outlook, ensure you have specified the following API permissions and ensured that these permissions have been granted consent as shown below:
+
+    ![Microsoft Azure API Perms](images/Microsoft%20Azure%20API%20Perms.JPG)
+
+    - For Google, ensure you have specified the follwing API permissions
+   
 
 ### Unable to login via Oauth the second time
 
@@ -120,4 +127,4 @@ Try enabling IMAP access for your email account -> settings -> advanced settings
 
 ![enable IMAP](images/IMAP.png)
 
-You could also try SMTP login for Google
+Alternatively, You could also try SMTP login for Google
