@@ -12,8 +12,7 @@ import keyring
 import json
 import re
 
-SMTP_SERVERS = {"yahoo.com": "smtp.mail.yahoo.com", 
-                "gmail.com": "smtp.gmail.com", 
+SMTP_SERVERS = {"gmail.com": "smtp.gmail.com", 
                 "hotmail.com": "smtp-mail.outlook.com", 
                 "outlook.com": "smtp-mail.outlook.com"}
 
