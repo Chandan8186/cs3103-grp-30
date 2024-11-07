@@ -15,7 +15,7 @@ This is a project for [Option 1] Smart Mailer Program for CS3103 Assignment. Mor
     *  [Logging Out](#logging-out)
 * [Troubleshooting](#troubleshooting)
     *  [Unable to login(OAuth)](#unable-to-login-via-oauth)
-    *  [Unable to login(OAuth) second time](#unable-to-login-via-oauth-the-second-time)
+    *  [Unable to login(OAuth) second time](#unable-to-login-via-oauth-after-a-second-time)
     *  [Unable to send email for google Oauth](#unable-to-send-email-for-google-oauth)
 
 
