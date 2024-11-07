@@ -1,7 +1,7 @@
 # CS3103 Group 30 Smart Mailer Program Set-up
 This is a project for [Option 1] Smart Mailer Program for CS3103 Assignment. More step by step guide could be found in the video:
 
-[![Demo Video](https://raw.githubusercontent.com/Chandan8186/cs3103-grp-30/main/images/mainIndex.png)](https://raw.githubusercontent.com/Chandan8186/cs3103-grp-30/main/CS3103_Project_Demo.mp4)
+[![Demo Video](images/mainIndex.png)](CS3103_Project_Demo.mp4)
 
 
 ## Contents
