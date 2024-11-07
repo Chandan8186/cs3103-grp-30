@@ -131,7 +131,9 @@ class SMTP_User(User):
     """
     def send_message(self, recipient, subject, body):
         if not self.email_sender.smtp:
-            self.email_sender.connect()
+            result = self.email_sender.connect()
+            if result != "Success":
+                return result
         return self.email_sender.send_message(self._get_message(recipient, subject, body))
 
 """
