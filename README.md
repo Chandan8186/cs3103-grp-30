@@ -24,16 +24,27 @@ This is a project for [Option 1] Smart Mailer Program for CS3103 Assignment. Mor
 This smart mailer program enables mass email sending with customisable fields and view count tracking. It takes in recipient details from a CSV file, and replaces the corresponding fields in the email body. We currently support gmail and outlook accounts, using either traditional email & password combos for sending with SMTP, or OAuth login for sending with REST APIs.
 
 ## Setting up Smart Mailer Program
-Navigate to `cs3103-grp-30` folder (located inside submission ZIP) and pip install the required packages:
+### Step 1:
+Navigate to `cs3103-grp-30` folder (which contains `main.py`) located inside the submission ZIP.<br>
+Alternatively, git clone the repository and navigate to the directory containing `main.py`:
+```
+git clone https://github.com/Chandan8186/cs3103-grp-30.git
+cd cs3103-grp-30
+```
+
+### Step 2:
+Install the required packages with pip:
 ```
 pip install -r requirements.txt
 ```
+
+### Step 3:
 Launch the program with the following command:
 ```
-(on Windows)
+# (on Windows)
 python main.py
 
-(on MacOS or Linux)
+# (on MacOS or Linux)
 python3 main.py
 ```
 A successful launch on the localhost server should show the following:
@@ -48,11 +59,16 @@ Press CTRL+C to quit
 127.0.0.1 - - [04/Nov/2024 18:13:00] "GET /static/style.css HTTP/1.1" 200 -
 127.0.0.1 - - [04/Nov/2024 18:13:01] "GET /favicon.ico HTTP/1.1" 404 -
 ```
-Opening the web application should look something like this:
+
+### Step 4:
+Open the application on a web browser using the following URL:
+
+- `http://localhost:5000`, if you are planning to use Outlook OAuth login for the app, or
+- `http://127.0.0.1:5000` otherwise.
+
+Opening the web application should lead to the following page:
 <br>
 ![main index](images/mainIndex.png)
-
-**Note: if you are planning to use an Outlook Account using OAuth to log in, please use this url instead: ```http://localhost:5000```**
 
 ## Features
 The smart mailer program allows you to schedule multiple batches of  emails at once, and track their send status and view counts with ease.
