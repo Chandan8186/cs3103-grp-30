@@ -3,6 +3,7 @@ This is a project for [Option 1] Smart Mailer Program for CS3103 Assignment. Mor
 
 [![Demo Video](https://raw.githubusercontent.com/Chandan8186/cs3103-grp-30/main/images/mainIndex.png)](https://raw.githubusercontent.com/Chandan8186/cs3103-grp-30/main/CS3103_Project_Demo.mp4)
 
+
 ## Contents
 * [Introduction](#introduction)
 * [Setting up](#setting-up-smart-mailer-program)
